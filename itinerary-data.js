@@ -249,37 +249,125 @@ const ITINERARY_DAYS = {
         "mapUrl": null
       },
       {
-        "type": "activity",
+        "type": "exploreWindow",
         "time": "11:45–13:30",
         "placeId": "saigon-concept",
         "title": "🌿 草田街區漫步・選物店掃街",
         "body": [
-          "第一站 Saigon Concept（14 Trần Ngọc Diện）：複合式紅磚庭園，棉麻女裝 DESIGNED BY SISI + 北歐風選物 LYKKE Studios（順路：In the Mood，32 Trần Ngọc Diện，手信家居小物）。第二站 Soo Kafe（23A Trần Ngọc Diện，正隔壁）：順路外帶手工蛋撻。第三站 YouOn Boutique（29 Thảo Điền）：高端輕熟度假風棉麻女裝。"
+          "這段是 flexible shopping window：每間小店不用全部深入逛，重點係保留節奏、冷氣位同可刪減空間。"
         ],
-        "routeHint": "Next: 法式下午茶（步行可達）。",
-        "mapUrl": "https://maps.google.com/?q=Saigon+Concept+Thảo+Điền"
+        "fields": {
+          "Area": "Trần Ngọc Diện → Thảo Điền",
+          "Style": "小店 / 選物 / 棉麻女裝",
+          "Pace": "Slow explore"
+        },
+        "children": [
+          {
+            "type": "activity",
+            "time": "Stop 1",
+            "placeId": "saigon-concept",
+            "title": "🌿 Saigon Concept",
+            "body": [
+              "複合式紅磚庭園，棉麻女裝 DESIGNED BY SISI + 北歐風選物 LYKKE Studios。"
+            ],
+            "mapUrl": "https://maps.google.com/?q=Saigon+Concept+Thảo+Điền"
+          },
+          {
+            "type": "activity",
+            "time": "Optional",
+            "placeId": "in-the-mood",
+            "title": "🧺 In the Mood",
+            "body": [
+              "32 Trần Ngọc Diện：手信、家居小物，順路可看。"
+            ],
+            "mapUrl": "https://maps.google.com/?q=In+the+Mood+32+Trần+Ngọc+Diện+Thảo+Điền"
+          },
+          {
+            "type": "activity",
+            "time": "Snack",
+            "placeId": "soo-kafe",
+            "title": "🥧 Soo Kafe",
+            "body": [
+              "23A Trần Ngọc Diện：順路外帶手工蛋撻。"
+            ],
+            "mapUrl": "https://maps.google.com/?q=Soo+Kafe+23A+Trần+Ngọc+Diện+Thảo+Điền"
+          },
+          {
+            "type": "activity",
+            "time": "Stop 2",
+            "placeId": "youon",
+            "title": "👗 YouOn Boutique",
+            "body": [
+              "29 Thảo Điền：高端輕熟度假風棉麻女裝。"
+            ],
+            "mapUrl": "https://maps.google.com/?q=YouOn+Boutique+29+Thảo+Điền"
+          }
+        ],
+        "routeHint": "Next: 法式下午茶二選一（步行可達）。"
       },
       {
-        "type": "activity",
+        "type": "exploreWindow",
         "time": "13:30–14:30",
         "placeId": "bakes",
         "title": "🥐 精緻法式下午茶（二選一）",
         "body": [
-          "Bakes Thảo Điền — 精緻法式甜點與多口味千層可頌；或 The Dreamers Bakery — 冷氣雅座，招牌蛋撻與大叻鮮牛奶（兩店相距僅 50 米）。約 80,000–150,000 VND / 人，4 人點 2–3 件分食。"
+          "Bakes Thảo Điền 或 The Dreamers Bakery，視乎當時想精緻甜點定冷氣坐低。"
         ],
-        "routeHint": "Next: 文創家居繼續逛（步行可達）。",
-        "mapUrl": "https://maps.google.com/?q=Bakes+Thảo+Điền"
+        "children": [
+          {
+            "type": "meal",
+            "time": "Option A",
+            "placeId": "bakes",
+            "title": "🥐 Bakes Thảo Điền",
+            "body": [
+              "精緻法式甜點與多口味千層可頌。"
+            ],
+            "mapUrl": "https://maps.google.com/?q=Bakes+Thảo+Điền"
+          },
+          {
+            "type": "meal",
+            "time": "Option B",
+            "placeId": "dreamers-bakery",
+            "title": "🍮 The Dreamers Bakery",
+            "body": [
+              "冷氣雅座，招牌蛋撻與大叻鮮牛奶。"
+            ],
+            "mapUrl": "https://maps.google.com/?q=The+Dreamers+Bakery+Thảo+Điền"
+          }
+        ],
+        "routeHint": "Next: 文創家居繼續逛（步行可達）。"
       },
       {
-        "type": "activity",
+        "type": "exploreWindow",
         "time": "14:30–15:30",
         "placeId": "ohquao",
         "title": "🎨 文創家居",
         "body": [
-          "OHQUAO Living（19 Đường Số 38）— 在地藝術家明信片、香氛、手工藝品；Louh × Alouane（61 Nguyễn Bá Huân）— 高級棉織品家居服，親膚柔軟。"
+          "Spa 前最後一段輕鬆 shopping：OHQUAO 買在地藝術小物，Louh × Alouane 看棉織品家居服。"
         ],
-        "routeHint": "Next: 從 Louh × Alouane 步行 2–3 分鐘到 Mộc Hương Wellness。",
-        "mapUrl": "https://maps.google.com/?q=OHQUAO+Living+Thảo+Điền"
+        "children": [
+          {
+            "type": "activity",
+            "time": "Stop 1",
+            "placeId": "ohquao",
+            "title": "🎁 OHQUAO Living",
+            "body": [
+              "19 Đường Số 38：在地藝術家明信片、香氛、手工藝品。"
+            ],
+            "mapUrl": "https://maps.google.com/?q=OHQUAO+Living+Thảo+Điền"
+          },
+          {
+            "type": "activity",
+            "time": "Stop 2",
+            "placeId": "louh-alouane",
+            "title": "🧶 Louh × Alouane",
+            "body": [
+              "61 Nguyễn Bá Huân：高級棉織品家居服，親膚柔軟。"
+            ],
+            "mapUrl": "https://maps.google.com/?q=Louh+Alouane+61+Nguyễn+Bá+Huân+Thảo+Điền"
+          }
+        ],
+        "routeHint": "Next: 從 Louh × Alouane 步行 2–3 分鐘到 Mộc Hương Wellness。"
       },
       {
         "type": "activity",
