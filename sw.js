@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ccmv-travel-engine-stage3d-day-legacy-cleanup';
+const CACHE_NAME = 'ccmv-travel-engine-stage3e-itinerary-css-consolidation';
 const ASSETS = ["./", "./index.html", "./styles.css", "./script.js", "./data.js", "./manifest.json", "./place.html", "./day.html", "./offline.html", "./icon-192.png", "./icon-512.png", "./logo-watermark-monogram.png", "./logo-monogram-transparent.png", "./splash-logo.png", "./ccmv-logo-calibrated.png", "./guide.html", "./itinerary.html", "./memory.html", "./moments.html", "./expenses.html", "./trip.html"];
 
 self.addEventListener('install', e => {
