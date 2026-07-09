@@ -8,12 +8,11 @@
    that data, not silently replace it. As of this cleanup pass there are no
    remaining canonical-data mutations in this file.
 
-   This file still contains several later-version function wrappers/overrides,
-   especially around Moments and Expenses (e.g. openMomentsModal, saveMoments,
-   renderMoments, saveExpense, renderExpenses, openExpenseModal,
-   resetExpenseForm, editExpense, setFriend). Each later reassignment wraps and
-   calls the previous version, so the FINAL assignment in file order is what
-   actually runs. These were deliberately left untouched in Stage 1 because
+   This file still contains later-version function wrappers/overrides,
+   especially around Expenses (e.g. saveExpense, renderExpenses, openExpenseModal,
+   resetExpenseForm, editExpense, setFriend). Moments open/save/render/edit/delete
+   were consolidated in Stage 4C-4 so the active Moments API is the canonical
+   append/edit/delete implementation in the v3.2 workflow block. These were deliberately left untouched in Stage 1 because
    they carry legacy localStorage-format compatibility and have not been
    individually regression-tested — see DEFERRED_CLEANUP.md before touching them.
    ============================================================================ */
@@ -72,56 +71,16 @@ function openGuideModal(key){
 function closeGuideModal(){$('guideModal').classList.remove('show')}
 
 let currentMomentKey='';
-function openMomentsModal(key){
-  currentMomentKey=key;
-  const g=PLACES[key]||{title:key};
-  const saved=JSON.parse(localStorage.getItem('moment_'+key)||'{}');
-  document.getElementById('momentsTitle').textContent=g.title;
-  document.getElementById('momentsFriend').textContent=FRIENDS[getFriend()];
-  document.getElementById('momentsText').value=saved.text||'';
-  setStars(saved.rating||0);
-  renderMoodButtons(saved.moods||[]);
-  document.getElementById('momentsModal').classList.add('show');
-}
 function closeMomentsModal(){$('momentsModal').classList.remove('show')}
 function setStars(n){document.querySelectorAll('.star').forEach((el,i)=>el.classList.toggle('active',i<n));$('momentsRating').value=n;}
-function saveMoments(){
-  const key=currentMomentKey;if(!key)return;
-  const g=PLACES[key]||{title:key};
-  const existing=JSON.parse(localStorage.getItem('moment_'+key)||'{}');
-  const now=new Date().toISOString();
-  const data={
-    itemKey:key,itemTitle:g.title,friendLabel:FRIENDS[getFriend()],
-    rating:Number(document.getElementById('momentsRating').value||0),
-    moods:currentMood||[],
-    text:document.getElementById('momentsText').value,
-    createdAt:existing.createdAt||now,
-    editedAt:existing.createdAt?now:null
-  };
-  localStorage.setItem('moment_'+key,JSON.stringify(data));
-  closeMomentsModal();renderMoments();
-}
-function deleteMoment(key){localStorage.removeItem('moment_'+key);renderMoments();}
-function renderMoments(){
-  const box=document.getElementById('momentsTimeline');if(!box)return;
-  let arr=[];
-  for(let i=0;i<localStorage.length;i++){
-    let k=localStorage.key(i);
-    if(k&&k.startsWith('moment_')){
-      try{arr.push(JSON.parse(localStorage.getItem(k)))}catch(e){}
-    }
-  }
-  arr.sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
-  if(!arr.length){box.innerHTML='<p>暫時未有 Moments。</p>';return}
-  box.innerHTML=arr.map(e=>`<div class="moments-entry">
-    <strong>${e.itemTitle}</strong>
-    <p class="timestamp">${e.friendLabel||''} · ${formatTime(e.createdAt)}${e.editedAt?` · Edited ${formatTime(e.editedAt)}`:''}</p>
-    <p>${moodLabel(e.moods||[])}</p>
-    <p>${'⭐'.repeat(e.rating||0)}</p>
-    <p>${e.text||''}</p>
-    <div class="entry-actions"><button class="mini-btn" onclick="openMomentsModal('${e.itemKey}')">✏️ Edit</button><button class="mini-btn" onclick="deleteMoment('${e.itemKey}')">🗑 Delete</button></div>
-  </div>`).join('');
-}
+
+/* Stage 4C-4: legacy one-per-place Moments functions were removed.
+   The active Moments API is the append/edit/delete implementation below
+   (moments_list + legacy localStorage compatibility inside renderMoments).
+   These vars keep global onclick/bare calls stable until the canonical API assigns
+   window.openMomentsModal / window.saveMoments / window.editMoment /
+   window.deleteMoment / window.renderMoments later in this file. */
+var openMomentsModal, saveMoments, editMoment, deleteMoment, renderMoments;
 
 function openUnexpectedModal(){$('unexpectedFriend').textContent=FRIENDS[getFriend()];$('unexpectedText').value='';$('unexpectedModal').classList.add('show')}
 function closeUnexpectedModal(){$('unexpectedModal').classList.remove('show')}
@@ -503,6 +462,7 @@ function copyText(text){
     if(save) save.textContent='Save Changes';
     const modal=document.getElementById('momentsModal');
     if(modal) modal.classList.add('show');
+    try{ if(typeof window.simplifyMomentsAuthor === 'function') window.simplifyMomentsAuthor(); }catch(e){}
   };
   window.deleteMoment = function(idOrKey){
     let arr=readJson('moments_list',[]);
