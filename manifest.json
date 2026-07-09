@@ -1,6 +1,6 @@
 {
-  "name": "CCMV Travel Engine",
-  "short_name": "TravelEngine",
+  "name": "Saigon Companion",
+  "short_name": "Saigon",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
@@ -9,13 +9,13 @@
   "theme_color": "#8A4F2D",
   "icons": [
     {
-      "src": "assets/icons/icon-192.png",
+      "src": "icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "assets/icons/icon-512.png",
+      "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
