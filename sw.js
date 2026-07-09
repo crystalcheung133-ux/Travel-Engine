@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ccmv-travel-engine-stage4d-hygiene-docs';
+const CACHE_NAME = 'ccmv-travel-engine-stage4e1-home-nav-loading-polish';
 const ASSETS = [
   './',
   './index.html',
