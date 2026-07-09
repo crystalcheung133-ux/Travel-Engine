@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ccmv-travel-engine-stage4e2-visual-calibration';
+const CACHE_NAME = 'ccmv-travel-engine-stage4e21-regression-fix';
 const ASSETS = [
   './',
   './index.html',

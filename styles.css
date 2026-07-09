@@ -1749,3 +1749,82 @@ body.home-bg .home-day-button{margin-top:2px!important;}
     margin-bottom:24px!important;
   }
 }
+
+/* =========================================================
+   Stage 4E-2.1 — Regression Fix: desktop hero, splash sequence, sticky top bar
+   Scope: visual/layout only. No data or interaction logic changes.
+   ========================================================= */
+
+/* Sticky app top bar across Trip / Guide / Days / Moments / Expenses. */
+.site-nav{
+  position:sticky!important;
+  top:0!important;
+  z-index:1200!important;
+  transform:translateZ(0)!important;
+}
+
+/* Desktop regression fix: don't clip the hero on shorter desktop viewports. */
+@media (min-width:721px){
+  html:has(body.home-bg),
+  body.home-bg{
+    height:auto!important;
+    min-height:100dvh!important;
+    overflow:auto!important;
+  }
+  body.home-bg main.dashboard.home-premium.home-v37{
+    height:auto!important;
+    max-height:none!important;
+    min-height:calc(100dvh - 72px)!important;
+    overflow:visible!important;
+    padding:22px 16px calc(104px + env(safe-area-inset-bottom))!important;
+    align-items:center!important;
+    justify-content:center!important;
+  }
+  body.home-bg section.home-brand-card.v37-dashboard-home{
+    transform:none!important;
+    max-height:none!important;
+    margin:0 auto!important;
+  }
+}
+
+/* Mobile: keep the compact one-screen feel without clipping. */
+@media (max-width:720px){
+  body.home-bg main.dashboard.home-premium.home-v37{
+    overflow:visible!important;
+  }
+}
+
+/* Splash sequence fix:
+   Logo tile first, then slogan, then Vietnam 2026 once. No early destination flash. */
+@keyframes ccmvLogo421{
+  0%{opacity:0;transform:translateY(18px) scale(.96)}
+  16%{opacity:1;transform:translateY(0) scale(1)}
+  100%{opacity:1;transform:translateY(-2px) scale(1)}
+}
+@keyframes ccmvSlogan421{
+  0%,30%{opacity:0;transform:translateY(12px)}
+  44%,100%{opacity:1;transform:translateY(0)}
+}
+@keyframes ccmvVietnam421{
+  0%,64%{opacity:0;transform:translateY(8px)}
+  76%,100%{opacity:1;transform:translateY(0)}
+}
+#ccmvSplash .splash-logo{
+  animation:ccmvLogo421 8s cubic-bezier(.22,.8,.22,1) both!important;
+}
+#ccmvSplash .splash-line{
+  animation:ccmvSlogan421 8s ease both!important;
+}
+#ccmvSplash .splash-destination{
+  animation:ccmvVietnam421 8s ease both!important;
+}
+
+/* Keep the loading tile closer to Planner: warm, low-contrast, soft edge. */
+#ccmvSplash .splash-logo{
+  background:linear-gradient(180deg,rgba(248,240,229,.94),rgba(243,230,214,.88))!important;
+  border-color:rgba(204,181,153,.30)!important;
+  box-shadow:
+    0 20px 58px rgba(84,61,39,.10),
+    0 5px 18px rgba(84,61,39,.045),
+    inset 0 1px 0 rgba(255,255,255,.42)!important;
+}
