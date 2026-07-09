@@ -1638,3 +1638,114 @@ body.home-bg .home-day-button{
   #ccmvSplash .splash-content{transform:translateY(-2.5vh)!important}
   #ccmvSplash .splash-logo{width:min(64vw,280px)!important;border-radius:32px!important;margin-bottom:28px!important}
 }
+
+
+/* =========================================================
+   Stage 4E-2 — Visual Calibration
+   Scope: header logo blending, home vertical balance, loading tile softness.
+   No data / itinerary / Moments / Expenses logic changes.
+   ========================================================= */
+
+/* Header logo: use the transparent monogram mark so it reads as printed,
+   not as a pasted square photo. Keep Companion's warmer identity. */
+.site-nav .brand img,
+body.home-bg nav.site-nav a.brand img{
+  content:url('logo-watermark-monogram.png')!important;
+  width:58px!important;
+  height:46px!important;
+  object-fit:contain!important;
+  object-position:center!important;
+  background:transparent!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  mix-blend-mode:multiply!important;
+  opacity:.72!important;
+  filter:saturate(.95) contrast(.95) drop-shadow(0 2px 3px rgba(91,66,38,.05))!important;
+}
+.site-nav .brand{gap:12px!important;}
+@media(max-width:520px){
+  .site-nav .brand img,
+  body.home-bg nav.site-nav a.brand img{
+    width:58px!important;
+    height:46px!important;
+  }
+  .site-nav .brand{font-size:21px!important;}
+}
+
+/* Home front page: keep card content size, but reduce the dead air above and below. */
+body.home-bg main.dashboard.home-premium.home-v37{
+  height:calc(100dvh - 66px)!important;
+  max-height:calc(100dvh - 66px)!important;
+  padding:0 12px calc(72px + env(safe-area-inset-bottom))!important;
+  align-items:center!important;
+  justify-content:center!important;
+  overflow:hidden!important;
+}
+body.home-bg section.home-brand-card.v37-dashboard-home{
+  transform:translateY(-6.5vh)!important;
+  max-height:calc(100dvh - 142px)!important;
+  padding:20px 16px 18px!important;
+  box-shadow:0 20px 60px rgba(70,48,30,.12)!important;
+}
+body.home-bg .home-live-grid{gap:8px!important;margin-bottom:10px!important;}
+body.home-bg .live-card{min-height:74px!important;padding:8px 10px!important;}
+body.home-bg .home-day-button{margin-top:2px!important;}
+@media(max-width:520px){
+  body.home-bg main.dashboard.home-premium.home-v37{
+    height:calc(100dvh - 68px)!important;
+    max-height:calc(100dvh - 68px)!important;
+    padding:0 10px calc(70px + env(safe-area-inset-bottom))!important;
+  }
+  body.home-bg section.home-brand-card.v37-dashboard-home{
+    transform:translateY(-7.2vh)!important;
+    max-height:calc(100dvh - 138px)!important;
+    padding:18px 13px 16px!important;
+  }
+  body.home-bg .home-live-grid{gap:8px!important;margin-bottom:9px!important;}
+  body.home-bg .live-card{min-height:72px!important;padding:8px 9px!important;}
+  body.home-bg .home-day-button{min-height:42px!important;padding:9px 24px!important;}
+}
+@media(max-height:760px){
+  body.home-bg section.home-brand-card.v37-dashboard-home{transform:translateY(-8.4vh)!important;}
+}
+
+/* Loading tile: closer to Planner's soft cream tile — lower contrast,
+   softer border and diffuse shadow, no sudden bright white square. */
+#ccmvSplash{
+  background:linear-gradient(180deg,#fbf6ef 0%,#f4e8da 58%,#ecd9ca 100%)!important;
+}
+#ccmvSplash .splash-content{
+  transform:translateY(-1.8vh)!important;
+}
+#ccmvSplash .splash-logo{
+  content:url('ccmv-logo-calibrated.png')!important;
+  width:min(55vw,292px)!important;
+  aspect-ratio:1/1!important;
+  object-fit:contain!important;
+  background:linear-gradient(180deg,rgba(250,241,228,.96),rgba(244,230,212,.9))!important;
+  border:1px solid rgba(205,182,152,.38)!important;
+  border-radius:30px!important;
+  box-shadow:
+    0 18px 52px rgba(84,61,39,.11),
+    0 4px 16px rgba(84,61,39,.055),
+    inset 0 1px 0 rgba(255,255,255,.48)!important;
+  filter:saturate(.96) contrast(.98)!important;
+  opacity:.96!important;
+}
+#ccmvSplash .splash-line{
+  color:#8b6842!important;
+  text-shadow:0 1px 0 rgba(255,250,242,.45)!important;
+}
+#ccmvSplash .splash-destination{
+  color:#8b6842!important;
+  opacity:.86!important;
+}
+@media(max-width:520px){
+  #ccmvSplash .splash-content{transform:translateY(-1.6vh)!important;}
+  #ccmvSplash .splash-logo{
+    width:min(64vw,276px)!important;
+    border-radius:30px!important;
+    margin-bottom:24px!important;
+  }
+}
