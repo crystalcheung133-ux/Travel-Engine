@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ccmv-travel-engine-stage4c1-expenses-open-save-pilot';
+const CACHE_NAME = 'ccmv-travel-engine-stage4c2-expenses-render-edit-delete';
 const ASSETS = ["./", "./index.html", "./styles.css", "./script.js", "./data.js", "./manifest.json", "./place.html", "./day.html", "./offline.html", "./icon-192.png", "./icon-512.png", "./logo-watermark-monogram.png", "./logo-monogram-transparent.png", "./splash-logo.png", "./ccmv-logo-calibrated.png", "./guide.html", "./itinerary.html", "./memory.html", "./moments.html", "./expenses.html", "./trip.html"];
 
 self.addEventListener('install', e => {
