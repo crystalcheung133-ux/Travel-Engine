@@ -282,7 +282,7 @@ function openTripCard(key) {
   const content = document.getElementById('tripModalContent');
   const modal = document.getElementById('tripModal');
   if (!content || !modal) return;
-  content.innerHTML = `<div class="trip-onepage"><p class="kicker">Trip</p><h2>${t.title}</h2>${t.body}<div class="guide-next-row"><button class="pill" onclick="openTripCard('${prev}')">‹ Previous</button><button class="pill" onclick="openTripCard('${next}')">Next ›</button></div><p class="timestamp">Build · Stage 3D</p></div>`;
+  content.innerHTML = `<div class="trip-onepage"><p class="kicker">Trip</p><h2>${t.title}</h2>${t.body}<div class="guide-next-row"><button class="pill" onclick="openTripCard('${prev}')">‹ Previous</button><button class="pill" onclick="openTripCard('${next}')">Next ›</button></div><p class="timestamp">Build · Stage 4C-3</p></div>`;
   modal.classList.add('show');
   const sheet=document.querySelector('#tripModal .trip-sheet');
   if(sheet) sheet.scrollTop=0;
@@ -452,6 +452,7 @@ function copyText(text){
     if(save) save.textContent='Save';
     const modal=document.getElementById('momentsModal');
     if(modal) modal.classList.add('show');
+    try{ if(typeof window.simplifyMomentsAuthor === 'function') window.simplifyMomentsAuthor(); }catch(e){}
   };
   window.saveMoments = function(){
     const key = currentMomentKey || 'general';
@@ -953,17 +954,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       row.querySelectorAll('button').forEach(btn=>btn.remove());
     }
   }
-  const previousOpenMoments = window.openMomentsModal;
-  window.openMomentsModal = function(key){
-    if(typeof previousOpenMoments === 'function') previousOpenMoments(key);
-    simplifyMomentsAuthor();
-  };
-  const previousSaveMoments = window.saveMoments;
-  window.saveMoments = function(){
-    if(typeof previousSaveMoments === 'function') previousSaveMoments();
-    // Moments are one-at-a-time: save, close, return to summary.
-    try{ closeMomentsModal(); renderMoments(); }catch(e){}
-  };
+  window.simplifyMomentsAuthor = simplifyMomentsAuthor;
 
   const previousSetFriend = window.setFriend;
   window.setFriend = function(k){
