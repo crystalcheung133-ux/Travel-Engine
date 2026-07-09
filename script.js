@@ -1133,3 +1133,161 @@ function getBookingStatusLabel(status){
   };
   return map[status] || (status || 'Unknown');
 }
+
+/* ============================================================================
+   STAGE 4C-1 — EXPENSES OPEN/SAVE CANONICAL ACTIVE HANDLERS
+   ----------------------------------------------------------------------------
+   Pilot scope: make the active openExpenseModal() and saveExpense() behavior
+   explicit at the end of script.js. Earlier expense wrappers are retained as
+   legacy/deferred code for this pilot; because these assignments run last, the
+   live app now has a single active open/save pair to test before any deletion.
+   No storage schema, UI copy, Moments code, or renderExpenses logic changed.
+   ============================================================================ */
+(function(){
+  const FRIEND_ORDER=['christal','crystal','mero','vivian'];
+  const FRIEND_LABELS={christal:'🧸 Christal',crystal:'👓 Crystal',mero:'✝️ Mero',vivian:'👟 Vivian'};
+
+  function currentUser4C1(){
+    try{return (typeof getFriend==='function' ? getFriend() : localStorage.getItem('saigon_friend')) || 'crystal';}
+    catch(e){return 'crystal';}
+  }
+  function labelFor4C1(k){
+    try{return (typeof FRIENDS!=='undefined' && FRIENDS[k]) ? FRIENDS[k] : (FRIEND_LABELS[k]||FRIEND_LABELS.crystal);}
+    catch(e){return FRIEND_LABELS[k]||FRIEND_LABELS.crystal;}
+  }
+  function setSelectValue4C1(id,value){
+    const el=document.getElementById(id); if(!el) return;
+    el.value=value;
+    Array.from(el.options||[]).forEach(opt=>{ opt.selected=(opt.value===value); });
+    try{ el.dispatchEvent(new Event('change',{bubbles:true})); }catch(e){}
+  }
+  function ensurePaidByUI4C1(){
+    const select=document.getElementById('expensePaidBy');
+    if(!select) return;
+    if(!document.getElementById('paidByDisplay')){
+      select.classList.add('paid-by-hidden-select');
+      select.setAttribute('aria-hidden','true');
+      select.tabIndex=-1;
+      const panel=document.createElement('div');
+      panel.className='paid-by-panel';
+      panel.innerHTML=`
+        <div class="paid-by-display" id="paidByDisplay">
+          <span class="paid-by-current" id="paidByDisplayName">${labelFor4C1(select.value||currentUser4C1())}</span>
+          <button type="button" class="paid-by-change" id="paidByChangeButton">Change</button>
+        </div>
+        <div class="paid-by-choices" id="paidByChoices" hidden>
+          ${FRIEND_ORDER.map(k=>`<button type="button" data-friend="${k}">${labelFor4C1(k)}</button>`).join('')}
+        </div>`;
+      select.insertAdjacentElement('afterend',panel);
+      panel.querySelector('#paidByChangeButton')?.addEventListener('click',()=>{
+        const choices=panel.querySelector('#paidByChoices');
+        if(choices) choices.hidden=!choices.hidden;
+        updatePaidByDisplay4C1();
+      });
+      panel.querySelectorAll('#paidByChoices button').forEach(btn=>{
+        btn.addEventListener('click',()=>{
+          setSelectValue4C1('expensePaidBy',btn.dataset.friend);
+          try{ if(typeof syncConsumedIfAuto==='function') syncConsumedIfAuto(); }catch(e){}
+          const choices=panel.querySelector('#paidByChoices'); if(choices) choices.hidden=true;
+          updatePaidByDisplay4C1();
+        });
+      });
+      select.addEventListener('change',updatePaidByDisplay4C1);
+    }
+    updatePaidByDisplay4C1();
+  }
+  function updatePaidByDisplay4C1(){
+    const hidden=document.getElementById('expensePaidBy');
+    const paid=hidden?.value || currentUser4C1();
+    const display=document.getElementById('paidByDisplayName');
+    if(display) display.textContent=labelFor4C1(paid);
+    document.querySelectorAll('#paidByChoices button').forEach(btn=>{
+      btn.classList.toggle('active',btn.dataset.friend===paid);
+    });
+  }
+  function readExpenses4C1(){
+    try{ return JSON.parse(localStorage.getItem('expenses')||'[]'); }catch(e){ return []; }
+  }
+  function writeExpenses4C1(arr){ localStorage.setItem('expenses',JSON.stringify(arr)); }
+  function showExpenseSavedNote4C1(){
+    const sheet=document.querySelector('#expenseModal .tools-sheet');
+    if(!sheet) return;
+    let note=document.getElementById('expenseSavedNote');
+    if(!note){
+      note=document.createElement('div');
+      note.id='expenseSavedNote';
+      note.className='expense-saved-note';
+      note.textContent='✓ Expense saved. Ready for the next one.';
+      const form=sheet.querySelector('.expense-form');
+      sheet.insertBefore(note,form||sheet.firstChild);
+    }
+    note.classList.add('show');
+    setTimeout(()=>note.classList.remove('show'),1400);
+  }
+  function resetExpenseForm4C1(){
+    if(typeof editingExpenseIndex!=='undefined') editingExpenseIndex=null;
+    const user=currentUser4C1();
+    const item=document.getElementById('expenseItem'); if(item) item.value='';
+    const total=document.getElementById('expenseTotal'); if(total) total.value='';
+    setSelectValue4C1('expensePaidBy',user);
+    const personal=document.getElementById('expensePersonal'); if(personal) personal.checked=false;
+    const consumed=document.getElementById('expenseConsumedBy');
+    if(consumed){ consumed.dataset.manual='false'; setSelectValue4C1('expenseConsumedBy',user); }
+    try{ if(typeof splitAll==='function') splitAll(); }
+    catch(e){ document.querySelectorAll('#expenseModal input[data-split]').forEach(x=>x.checked=true); }
+    try{ if(typeof updateExpenseMode==='function') updateExpenseMode(); }catch(e){}
+    const title=document.getElementById('expenseModalTitle'); if(title) title.textContent='💰 What did we spend?';
+    const save=document.getElementById('expenseSaveButton'); if(save) save.textContent='Save';
+    ensurePaidByUI4C1();
+    updatePaidByDisplay4C1();
+  }
+
+  window.openExpenseModal=function(){
+    ensurePaidByUI4C1();
+    resetExpenseForm4C1();
+    const modal=document.getElementById('expenseModal');
+    if(modal) modal.classList.add('show');
+    try{ if(typeof renderLatestExpenseMini==='function') renderLatestExpenseMini(); }catch(e){}
+    const first=document.getElementById('expenseItem'); if(first) setTimeout(()=>first.focus(),60);
+  };
+
+  window.saveExpense=function(){
+    ensurePaidByUI4C1();
+    const item=(document.getElementById('expenseItem')?.value || '').trim();
+    const total=Number(String(document.getElementById('expenseTotal')?.value||'').replace(/[^0-9.]/g,''));
+    const paidBy=document.getElementById('expensePaidBy')?.value || currentUser4C1();
+    const personal=!!document.getElementById('expensePersonal')?.checked;
+    const split=[...document.querySelectorAll('#expenseModal input[data-split]:checked')].map(x=>x.value);
+    const consumedBy=document.getElementById('expenseConsumedBy')?.value || paidBy;
+    if(!item || !total) return alert('Please complete item and total.');
+    if(!personal && !split.length) return alert('Please choose who to split between.');
+
+    const arr=readExpenses4C1();
+    const now=new Date().toISOString();
+    const data={
+      item,total,paidBy,
+      type:personal?'personal':'shared',
+      split:personal?[consumedBy]:split,
+      consumedBy:personal?consumedBy:null,
+      createdAt:now
+    };
+    if(typeof editingExpenseIndex!=='undefined' && editingExpenseIndex!==null && arr[editingExpenseIndex]){
+      data.createdAt=arr[editingExpenseIndex].createdAt || now;
+      data.editedAt=now;
+      arr[editingExpenseIndex]=data;
+      editingExpenseIndex=null;
+    }else{
+      arr.push(data);
+    }
+    writeExpenses4C1(arr);
+    try{ if(typeof renderExpenses==='function') renderExpenses(); }catch(e){}
+    try{ if(typeof renderToolTransactionHistory==='function') renderToolTransactionHistory(); }catch(e){}
+    resetExpenseForm4C1();
+    showExpenseSavedNote4C1();
+    const first=document.getElementById('expenseItem'); if(first) setTimeout(()=>first.focus(),60);
+    // Intentional: keep modal open for quick multiple expense entry.
+  };
+
+  window.resetExpenseForm=resetExpenseForm4C1;
+  document.addEventListener('DOMContentLoaded',()=>{ ensurePaidByUI4C1(); updatePaidByDisplay4C1(); });
+})();
