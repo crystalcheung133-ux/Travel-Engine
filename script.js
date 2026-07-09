@@ -25,6 +25,14 @@ function visitDayHTML(key){
   return `<div class="quick-info-row visit-row"><span class="quick-info-icon">📅</span><span><span class="quick-info-label">Visit Day</span><span class="quick-info-value day-link-row">${buttons}</span></span></div>`;
 }
 
+
+function placeHref(key){
+  return `place.html?id=${encodeURIComponent(key)}`;
+}
+function goPlace(key){
+  window.location.href = placeHref(key);
+}
+
 function $(id){return document.getElementById(id);}
 function closeMiniMenus(){document.querySelectorAll('.mini-menu').forEach(m=>m.classList.remove('show'));}
 function toggleMenu(id){const m=$(id);const open=m&&m.classList.contains('show');closeMiniMenus();if(m&&!open)m.classList.add('show');}
@@ -39,7 +47,7 @@ function openFriendModal(){$('mamaModal').classList.add('show')} function closeF
 function openGuideCategory(cat){
  const list=(CATEGORIES[cat]||[]).slice().sort((a,b)=>a.title.localeCompare(b.title));
  if(list.length===1){closeMiniMenus();openGuideModal(list[0].key);return;}
- const rows=list.map(i=>`<button onclick="openGuideModal('${i.key}')"><span><span class="guide-list-title">${i.emoji} ${i.title}</span><span class="guide-list-sub">${i.sub||''}</span></span><span>›</span></button>`).join('');
+ const rows=list.map(i=>`<button onclick="goPlace('${i.key}')"><span><span class="guide-list-title">${i.emoji} ${i.title}</span><span class="guide-list-sub">${i.sub||''}</span></span><span>›</span></button>`).join('');
  $('guideModalContent').innerHTML=`<p class="kicker">Guide</p><h2>${cat}</h2><div class="category-pop-list">${rows}</div>`;
  closeMiniMenus();$('guideModal').classList.add('show');
 }
@@ -391,7 +399,7 @@ const _shopDirectoryOpenGuideCategory = openGuideCategory;
 openGuideCategory = function(cat){
   if(cat === 'SHOP'){
     const list=(CATEGORIES[cat]||[]).slice().sort((a,b)=>String(a.title||'').localeCompare(String(b.title||'')));
-    const rows=`<button onclick="location.href='guide.html#shopping-directory'"><span><span class="guide-list-title">🛍 Shopping Directory</span><span class="guide-list-sub">Optional shops · Near · Best with Day</span></span><span>↓</span></button>` + list.map(i=>`<button onclick="openGuideModal('${i.key}')"><span><span class="guide-list-title">${i.emoji} ${i.title}</span><span class="guide-list-sub">${i.sub||''}</span></span><span>›</span></button>`).join('');
+    const rows=`<button onclick="location.href='guide.html#shopping-directory'"><span><span class="guide-list-title">🛍 Shopping Directory</span><span class="guide-list-sub">Optional shops · Near · Best with Day</span></span><span>↓</span></button>` + list.map(i=>`<button onclick="goPlace('${i.key}')"><span><span class="guide-list-title">${i.emoji} ${i.title}</span><span class="guide-list-sub">${i.sub||''}</span></span><span>›</span></button>`).join('');
     document.getElementById('guideModalContent').innerHTML=`<p class="kicker">Guide</p><h2>SHOP</h2><div class="category-pop-list">${rows}</div>`;
     closeMiniMenus();document.getElementById('guideModal').classList.add('show');return;
   }
@@ -401,7 +409,7 @@ openGuideCategory = function(cat){
 /* Stage 1 cleanup note: PLACES.general (the fallback "Moments" place card) used to be
    injected here at runtime. It is now defined canonically in data.js, so nothing to do here. */
 // Renders a full place detail page (page-hero + quick-info-card + prose blocks)
-// from PLACES data. Used by every standalone place page (bakes.html, lune.html, etc.)
+// from PLACES data. Used by the shared place.html?id=... renderer and legacy standalone place pages
 // so page content lives in ONE place (data.js) instead of being duplicated per file.
 function renderPlacePage(key){
   const g = PLACES[key];
