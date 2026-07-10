@@ -8,12 +8,9 @@
    that data, not silently replace it. As of this cleanup pass there are no
    remaining canonical-data mutations in this file.
 
-   This file still contains later-version function wrappers/overrides,
-   historically around Expenses (e.g. saveExpense, renderExpenses, openExpenseModal,
-   resetExpenseForm, editExpense). Stage 4C-6 consolidates the active Expenses
-   API into two explicit final blocks near the end of this file: Stage 4C-1
-   owns open/save/reset and Stage 4C-2 owns render/edit/delete/history. Moments
-   open/save/render/edit/delete were consolidated in Stage 4C-4.
+   Expenses now use one canonical module (Stage 4F-Q) for open/save/reset/
+   render/edit/delete/history. Moments open/save/render/edit/delete were
+   consolidated in Stage 4C-4.
    ============================================================================ */
 
 function visitDayHTML(key){
@@ -125,7 +122,7 @@ function openTripCard(key) {
   const content = document.getElementById('tripModalContent');
   const modal = document.getElementById('tripModal');
   if (!content || !modal) return;
-  content.innerHTML = `<div class="trip-onepage"><p class="kicker">Trip</p><h2>${t.title}</h2>${t.body}<div class="guide-next-row"><button class="pill" onclick="openTripCard('${prev}')">‹ Previous</button><button class="pill" onclick="openTripCard('${next}')">Next ›</button></div><p class="timestamp">Build · Stage 4F-P</p></div>`;
+  content.innerHTML = `<div class="trip-onepage"><p class="kicker">Trip</p><h2>${t.title}</h2>${t.body}<div class="guide-next-row"><button class="pill" onclick="openTripCard('${prev}')">‹ Previous</button><button class="pill" onclick="openTripCard('${next}')">Next ›</button></div><p class="timestamp">Build · Stage 4F-Q</p></div>`;
   modal.classList.add('show');
   const sheet=document.querySelector('#tripModal .trip-sheet');
   if(sheet) sheet.scrollTop=0;
@@ -542,33 +539,51 @@ function getBookingStatusLabel(status){
 }
 
 /* ============================================================================
-   STAGE 4C-1 — EXPENSES OPEN/SAVE CANONICAL ACTIVE HANDLERS
+   STAGE 4F-Q — EXPENSES SINGLE CANONICAL MODULE
    ----------------------------------------------------------------------------
-   Pilot scope: make the active openExpenseModal() and saveExpense() behavior
-   explicit at the end of script.js. Earlier expense wrappers are retained as
-   legacy/deferred code for this pilot; because these assignments run last, the
-   live app now has a single active open/save pair to test before any deletion.
-   No storage schema, UI copy, Moments code, or renderExpenses logic changed.
+   One active implementation owns the Expenses open/save/reset/render/edit/
+   delete/history flow. Storage schema, UI copy, modal behaviour and calculations
+   are unchanged from the deploy-tested Stage 4F-P baseline.
    ============================================================================ */
 (function(){
   const FRIEND_ORDER=['christal','crystal','mero','vivian'];
-  const FRIEND_LABELS={christal:'🧸 Christal',crystal:'👓 Crystal',mero:'✝️ Mero',vivian:'👟 Vivian'};
+  const FRIEND_FALLBACK={christal:'🧸 Christal',crystal:'👓 Crystal',mero:'✝️ Mero',vivian:'👟 Vivian'};
 
-  function currentUser4C1(){
+  function currentUser(){
     try{return (typeof getFriend==='function' ? getFriend() : localStorage.getItem('saigon_friend')) || 'crystal';}
     catch(e){return 'crystal';}
   }
-  function labelFor4C1(k){
-    try{return (typeof FRIENDS!=='undefined' && FRIENDS[k]) ? FRIENDS[k] : (FRIEND_LABELS[k]||FRIEND_LABELS.crystal);}
-    catch(e){return FRIEND_LABELS[k]||FRIEND_LABELS.crystal;}
+  function labelFor(k){
+    try{return (typeof FRIENDS!=='undefined' && FRIENDS[k]) ? FRIENDS[k] : (FRIEND_FALLBACK[k]||k||'');}
+    catch(e){return FRIEND_FALLBACK[k]||k||'';}
   }
-  function setSelectValue4C1(id,value){
+  function readExpenses(){
+    try{return JSON.parse(localStorage.getItem('expenses')||'[]');}
+    catch(e){return [];}
+  }
+  function writeExpenses(arr){
+    localStorage.setItem('expenses',JSON.stringify(Array.isArray(arr)?arr:[]));
+  }
+  function timeLabel(iso){
+    try{return (typeof formatTime==='function') ? formatTime(iso) : (iso?new Date(iso).toLocaleString():'');}
+    catch(e){return iso||'';}
+  }
+  function setSelectValue(id,value){
     const el=document.getElementById(id); if(!el) return;
     el.value=value;
-    Array.from(el.options||[]).forEach(opt=>{ opt.selected=(opt.value===value); });
-    try{ el.dispatchEvent(new Event('change',{bubbles:true})); }catch(e){}
+    Array.from(el.options||[]).forEach(opt=>{opt.selected=(opt.value===value);});
+    try{el.dispatchEvent(new Event('change',{bubbles:true}));}catch(e){}
   }
-  function ensurePaidByUI4C1(){
+  function updatePaidByDisplay(){
+    const hidden=document.getElementById('expensePaidBy');
+    const paid=hidden?.value || currentUser();
+    const display=document.getElementById('paidByDisplayName');
+    if(display) display.textContent=labelFor(paid);
+    document.querySelectorAll('#paidByChoices button').forEach(btn=>{
+      btn.classList.toggle('active',btn.dataset.friend===paid);
+    });
+  }
+  function ensurePaidByUI(){
     const select=document.getElementById('expensePaidBy');
     if(!select) return;
     if(!document.getElementById('paidByDisplay')){
@@ -577,46 +592,25 @@ function getBookingStatusLabel(status){
       select.tabIndex=-1;
       const panel=document.createElement('div');
       panel.className='paid-by-panel';
-      panel.innerHTML=`
-        <div class="paid-by-display" id="paidByDisplay">
-          <span class="paid-by-current" id="paidByDisplayName">${labelFor4C1(select.value||currentUser4C1())}</span>
-          <button type="button" class="paid-by-change" id="paidByChangeButton">Change</button>
-        </div>
-        <div class="paid-by-choices" id="paidByChoices" hidden>
-          ${FRIEND_ORDER.map(k=>`<button type="button" data-friend="${k}">${labelFor4C1(k)}</button>`).join('')}
-        </div>`;
+      panel.innerHTML=`<div class="paid-by-display" id="paidByDisplay"><span class="paid-by-current" id="paidByDisplayName">${labelFor(select.value||currentUser())}</span><button type="button" class="paid-by-change" id="paidByChangeButton">Change</button></div><div class="paid-by-choices" id="paidByChoices" hidden>${FRIEND_ORDER.map(k=>`<button type="button" data-friend="${k}">${labelFor(k)}</button>`).join('')}</div>`;
       select.insertAdjacentElement('afterend',panel);
       panel.querySelector('#paidByChangeButton')?.addEventListener('click',()=>{
-        const choices=panel.querySelector('#paidByChoices');
-        if(choices) choices.hidden=!choices.hidden;
-        updatePaidByDisplay4C1();
+        const choices=panel.querySelector('#paidByChoices'); if(choices) choices.hidden=!choices.hidden;
+        updatePaidByDisplay();
       });
       panel.querySelectorAll('#paidByChoices button').forEach(btn=>{
         btn.addEventListener('click',()=>{
-          setSelectValue4C1('expensePaidBy',btn.dataset.friend);
-          try{ if(typeof syncConsumedIfAuto==='function') syncConsumedIfAuto(); }catch(e){}
+          setSelectValue('expensePaidBy',btn.dataset.friend);
+          try{if(typeof syncConsumedIfAuto==='function') syncConsumedIfAuto();}catch(e){}
           const choices=panel.querySelector('#paidByChoices'); if(choices) choices.hidden=true;
-          updatePaidByDisplay4C1();
+          updatePaidByDisplay();
         });
       });
-      select.addEventListener('change',updatePaidByDisplay4C1);
+      select.addEventListener('change',updatePaidByDisplay);
     }
-    updatePaidByDisplay4C1();
+    updatePaidByDisplay();
   }
-  function updatePaidByDisplay4C1(){
-    const hidden=document.getElementById('expensePaidBy');
-    const paid=hidden?.value || currentUser4C1();
-    const display=document.getElementById('paidByDisplayName');
-    if(display) display.textContent=labelFor4C1(paid);
-    document.querySelectorAll('#paidByChoices button').forEach(btn=>{
-      btn.classList.toggle('active',btn.dataset.friend===paid);
-    });
-  }
-  function readExpenses4C1(){
-    try{ return JSON.parse(localStorage.getItem('expenses')||'[]'); }catch(e){ return []; }
-  }
-  function writeExpenses4C1(arr){ localStorage.setItem('expenses',JSON.stringify(arr)); }
-  function showExpenseSavedNote4C1(){
+  function showExpenseSavedNote(){
     const sheet=document.querySelector('#expenseModal .tools-sheet');
     if(!sheet) return;
     let note=document.getElementById('expenseSavedNote');
@@ -631,54 +625,65 @@ function getBookingStatusLabel(status){
     note.classList.add('show');
     setTimeout(()=>note.classList.remove('show'),1400);
   }
-  function resetExpenseForm4C1(){
-    if(typeof editingExpenseIndex!=='undefined') editingExpenseIndex=null;
-    const user=currentUser4C1();
+  function resetExpenseForm(){
+    editingExpenseIndex=null;
+    const user=currentUser();
     const item=document.getElementById('expenseItem'); if(item) item.value='';
     const total=document.getElementById('expenseTotal'); if(total) total.value='';
-    setSelectValue4C1('expensePaidBy',user);
+    setSelectValue('expensePaidBy',user);
     const personal=document.getElementById('expensePersonal'); if(personal) personal.checked=false;
     const consumed=document.getElementById('expenseConsumedBy');
-    if(consumed){ consumed.dataset.manual='false'; setSelectValue4C1('expenseConsumedBy',user); }
-    try{ if(typeof splitAll==='function') splitAll(); }
-    catch(e){ document.querySelectorAll('#expenseModal input[data-split]').forEach(x=>x.checked=true); }
-    try{ if(typeof updateExpenseMode==='function') updateExpenseMode(); }catch(e){}
+    if(consumed){consumed.dataset.manual='false';setSelectValue('expenseConsumedBy',user);}
+    try{splitAll();}
+    catch(e){document.querySelectorAll('#expenseModal input[data-split]').forEach(x=>x.checked=true);}
+    try{updateExpenseMode();}catch(e){}
     const title=document.getElementById('expenseModalTitle'); if(title) title.textContent='💰 What did we spend?';
     const save=document.getElementById('expenseSaveButton'); if(save) save.textContent='Save';
-    ensurePaidByUI4C1();
-    updatePaidByDisplay4C1();
+    ensurePaidByUI();
+    updatePaidByDisplay();
+  }
+  function expenseCard(e){
+    const personal=e.type==='personal';
+    const split=e.split||[];
+    const consumer=e.consumedBy || split[0] || e.paidBy;
+    const who=personal ? `Consumed by ${labelFor(consumer)}` : `Split: ${split.map(labelFor).join(' · ')}`;
+    return `<div class="expense-card"><strong>${e.item||''}</strong><p class="timestamp">${timeLabel(e.createdAt)}${e.editedAt?` · Edited ${timeLabel(e.editedAt)}`:''}</p><p>${Number(e.total||0).toLocaleString()} VND · Paid by ${labelFor(e.paidBy)}</p><p>${personal?'Personal Expense':'Shared Expense'} · ${who}</p><div class="entry-actions"><button class="mini-btn" onclick="editExpense(${e._idx})">✏️ Edit</button><button class="mini-btn" onclick="deleteExpense(${e._idx})">🗑 Delete</button></div></div>`;
+  }
+  function ensureToolHistory(){
+    const sheet=document.querySelector('#expenseModal .tools-sheet');
+    if(!sheet || document.getElementById('toolTransactionHistory')) return;
+    const form=sheet.querySelector('.expense-form');
+    const holder=document.createElement('div');
+    holder.className='tool-transaction-history';
+    holder.id='toolTransactionHistory';
+    if(form && form.parentNode) form.parentNode.insertBefore(holder,form.nextSibling);
+    else sheet.appendChild(holder);
   }
 
   window.openExpenseModal=function(){
-    ensurePaidByUI4C1();
-    resetExpenseForm4C1();
+    ensurePaidByUI();
+    resetExpenseForm();
     const modal=document.getElementById('expenseModal');
     if(modal) modal.classList.add('show');
-    try{ if(typeof renderLatestExpenseMini==='function') renderLatestExpenseMini(); }catch(e){}
+    try{if(typeof renderLatestExpenseMini==='function') renderLatestExpenseMini();}catch(e){}
     const first=document.getElementById('expenseItem'); if(first) setTimeout(()=>first.focus(),60);
   };
 
   window.saveExpense=function(){
-    ensurePaidByUI4C1();
-    const item=(document.getElementById('expenseItem')?.value || '').trim();
+    ensurePaidByUI();
+    const item=(document.getElementById('expenseItem')?.value||'').trim();
     const total=Number(String(document.getElementById('expenseTotal')?.value||'').replace(/[^0-9.]/g,''));
-    const paidBy=document.getElementById('expensePaidBy')?.value || currentUser4C1();
+    const paidBy=document.getElementById('expensePaidBy')?.value || currentUser();
     const personal=!!document.getElementById('expensePersonal')?.checked;
     const split=[...document.querySelectorAll('#expenseModal input[data-split]:checked')].map(x=>x.value);
     const consumedBy=document.getElementById('expenseConsumedBy')?.value || paidBy;
     if(!item || !total) return alert('Please complete item and total.');
     if(!personal && !split.length) return alert('Please choose who to split between.');
 
-    const arr=readExpenses4C1();
+    const arr=readExpenses();
     const now=new Date().toISOString();
-    const data={
-      item,total,paidBy,
-      type:personal?'personal':'shared',
-      split:personal?[consumedBy]:split,
-      consumedBy:personal?consumedBy:null,
-      createdAt:now
-    };
-    if(typeof editingExpenseIndex!=='undefined' && editingExpenseIndex!==null && arr[editingExpenseIndex]){
+    const data={item,total,paidBy,type:personal?'personal':'shared',split:personal?[consumedBy]:split,consumedBy:personal?consumedBy:null,createdAt:now};
+    if(editingExpenseIndex!==null && arr[editingExpenseIndex]){
       data.createdAt=arr[editingExpenseIndex].createdAt || now;
       data.editedAt=now;
       arr[editingExpenseIndex]=data;
@@ -686,121 +691,29 @@ function getBookingStatusLabel(status){
     }else{
       arr.push(data);
     }
-    writeExpenses4C1(arr);
-    try{ if(typeof renderExpenses==='function') renderExpenses(); }catch(e){}
-    try{ if(typeof renderToolTransactionHistory==='function') renderToolTransactionHistory(); }catch(e){}
-    resetExpenseForm4C1();
-    showExpenseSavedNote4C1();
+    writeExpenses(arr);
+    window.renderExpenses();
+    resetExpenseForm();
+    showExpenseSavedNote();
     const first=document.getElementById('expenseItem'); if(first) setTimeout(()=>first.focus(),60);
     // Intentional: keep modal open for quick multiple expense entry.
   };
 
-  window.resetExpenseForm=resetExpenseForm4C1;
-  document.addEventListener('DOMContentLoaded',()=>{ ensurePaidByUI4C1(); updatePaidByDisplay4C1(); });
-})();
-
-
-/* ============================================================================
-   STAGE 4C-2 — EXPENSES RENDER / EDIT / DELETE CANONICAL ACTIVE HANDLERS
-   ----------------------------------------------------------------------------
-   Scope: make the final active Expenses render/edit/delete handlers explicit at
-   the end of script.js, matching the already-tested Stage 4C-1 open/save flow.
-
-   Earlier v3.x expense wrappers remain in the file for rollback history, but
-   these assignments run last and are the live handlers. Moments code is not
-   touched in this stage.
-   ============================================================================ */
-(function(){
-  const FRIEND_ORDER_4C2=['christal','crystal','mero','vivian'];
-  const FRIEND_FALLBACK_4C2={christal:'🧸 Christal',crystal:'👓 Crystal',mero:'✝️ Mero',vivian:'👟 Vivian'};
-  function readExpenses4C2(){
-    try{ return JSON.parse(localStorage.getItem('expenses')||'[]'); }catch(e){ return []; }
-  }
-  function writeExpenses4C2(arr){
-    localStorage.setItem('expenses', JSON.stringify(Array.isArray(arr)?arr:[]));
-  }
-  function labelFor4C2(k){
-    try{ return (typeof FRIENDS!=='undefined' && FRIENDS[k]) ? FRIENDS[k] : (FRIEND_FALLBACK_4C2[k]||k||''); }
-    catch(e){ return FRIEND_FALLBACK_4C2[k]||k||''; }
-  }
-  function time4C2(iso){
-    try{ return (typeof formatTime==='function') ? formatTime(iso) : (iso?new Date(iso).toLocaleString(): ''); }
-    catch(e){ return iso||''; }
-  }
-  function expenseCard4C2(e){
-    const personal=e.type==='personal';
-    const split=e.split||[];
-    const consumer=e.consumedBy || split[0] || e.paidBy;
-    const who=personal ? `Consumed by ${labelFor4C2(consumer)}` : `Split: ${split.map(labelFor4C2).join(' · ')}`;
-    return `<div class="expense-card"><strong>${e.item||''}</strong><p class="timestamp">${time4C2(e.createdAt)}${e.editedAt?` · Edited ${time4C2(e.editedAt)}`:''}</p><p>${Number(e.total||0).toLocaleString()} VND · Paid by ${labelFor4C2(e.paidBy)}</p><p>${personal?'Personal Expense':'Shared Expense'} · ${who}</p><div class="entry-actions"><button class="mini-btn" onclick="editExpense(${e._idx})">✏️ Edit</button><button class="mini-btn" onclick="deleteExpense(${e._idx})">🗑 Delete</button></div></div>`;
-  }
-  function ensureToolHistory4C2(){
-    const sheet=document.querySelector('#expenseModal .tools-sheet');
-    if(!sheet || document.getElementById('toolTransactionHistory')) return;
-    const form=sheet.querySelector('.expense-form');
-    const holder=document.createElement('div');
-    holder.className='tool-transaction-history';
-    holder.id='toolTransactionHistory';
-    if(form && form.parentNode) form.parentNode.insertBefore(holder, form.nextSibling);
-    else sheet.appendChild(holder);
-  }
-  function setSelectValue4C2(id,value){
-    const el=document.getElementById(id); if(!el) return;
-    el.value=value;
-    Array.from(el.options||[]).forEach(opt=>{ opt.selected=(opt.value===value); });
-    try{ el.dispatchEvent(new Event('change',{bubbles:true})); }catch(e){}
-  }
-  function updatePaidByDisplay4C2(){
-    const hidden=document.getElementById('expensePaidBy');
-    const paid=hidden?.value || 'crystal';
-    const display=document.getElementById('paidByDisplayName');
-    if(display) display.textContent=labelFor4C2(paid);
-    document.querySelectorAll('#paidByChoices button').forEach(btn=>btn.classList.toggle('active',btn.dataset.friend===paid));
-  }
-  function ensurePaidByUI4C2(){
-    const select=document.getElementById('expensePaidBy');
-    if(!select) return;
-    if(!document.getElementById('paidByDisplay')){
-      select.classList.add('paid-by-hidden-select');
-      select.setAttribute('aria-hidden','true');
-      select.tabIndex=-1;
-      const panel=document.createElement('div');
-      panel.className='paid-by-panel';
-      panel.innerHTML=`<div class="paid-by-display" id="paidByDisplay"><span class="paid-by-current" id="paidByDisplayName">${labelFor4C2(select.value||'crystal')}</span><button type="button" class="paid-by-change" id="paidByChangeButton">Change</button></div><div class="paid-by-choices" id="paidByChoices" hidden>${FRIEND_ORDER_4C2.map(k=>`<button type="button" data-friend="${k}">${labelFor4C2(k)}</button>`).join('')}</div>`;
-      select.insertAdjacentElement('afterend',panel);
-      panel.querySelector('#paidByChangeButton')?.addEventListener('click',()=>{
-        const choices=panel.querySelector('#paidByChoices'); if(choices) choices.hidden=!choices.hidden;
-        updatePaidByDisplay4C2();
-      });
-      panel.querySelectorAll('#paidByChoices button').forEach(btn=>{
-        btn.addEventListener('click',()=>{
-          setSelectValue4C2('expensePaidBy',btn.dataset.friend);
-          try{ if(typeof syncConsumedIfAuto==='function') syncConsumedIfAuto(); }catch(e){}
-          const choices=panel.querySelector('#paidByChoices'); if(choices) choices.hidden=true;
-          updatePaidByDisplay4C2();
-        });
-      });
-      select.addEventListener('change',updatePaidByDisplay4C2);
-    }
-    updatePaidByDisplay4C2();
-  }
-
   window.renderToolTransactionHistory=function(){
     const box=document.getElementById('toolTransactionHistory');
     if(!box) return;
-    const latest=readExpenses4C2().map((e,i)=>({...e,_idx:i})).sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||''))).slice(0,5);
-    box.innerHTML=`<h3>Transaction History</h3>${latest.length?latest.map(expenseCard4C2).join(''):'<p class="timestamp">No transactions yet.</p>'}`;
+    const latest=readExpenses().map((e,i)=>({...e,_idx:i})).sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||''))).slice(0,5);
+    box.innerHTML=`<h3>Transaction History</h3>${latest.length?latest.map(expenseCard).join(''):'<p class="timestamp">No transactions yet.</p>'}`;
   };
 
   window.renderExpenses=function(){
     const pageBox=document.getElementById('expensePageList');
-    const arr=readExpenses4C2();
+    const arr=readExpenses();
     const sorted=arr.map((e,i)=>({...e,_idx:i})).sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
-
     if(pageBox){
-      let total=arr.reduce((sum,e)=>sum+Number(e.total||0),0);
-      let personalSpend={christal:0,crystal:0,mero:0,vivian:0};
-      let balance={christal:0,crystal:0,mero:0,vivian:0};
+      const total=arr.reduce((sum,e)=>sum+Number(e.total||0),0);
+      const personalSpend={christal:0,crystal:0,mero:0,vivian:0};
+      const balance={christal:0,crystal:0,mero:0,vivian:0};
       arr.forEach(e=>{
         const amount=Number(e.total||0);
         if(!balance[e.paidBy]) balance[e.paidBy]=0;
@@ -814,51 +727,53 @@ function getBookingStatusLabel(status){
         }else{
           const split=(e.split&&e.split.length)?e.split:[e.paidBy];
           const share=amount/split.length;
-          split.forEach(k=>{ if(!personalSpend[k]) personalSpend[k]=0; if(!balance[k]) balance[k]=0; personalSpend[k]+=share; balance[k]-=share; });
+          split.forEach(k=>{if(!personalSpend[k]) personalSpend[k]=0;if(!balance[k]) balance[k]=0;personalSpend[k]+=share;balance[k]-=share;});
         }
       });
-      const spendHtml=FRIEND_ORDER_4C2.map(k=>`<p>${labelFor4C2(k)}<br><strong>${Math.round(personalSpend[k]||0).toLocaleString()} VND</strong></p>`).join('');
-      const balanceHtml=FRIEND_ORDER_4C2.map(k=>{const v=balance[k]||0; return `<p>${labelFor4C2(k)}<br><strong>${v>=0?'Receive':'Owes'} ${Math.abs(Math.round(v)).toLocaleString()} VND</strong></p>`;}).join('');
-      pageBox.innerHTML=`<div class="expense-dashboard-v33"><div class="expense-total-card"><span>Trip Total</span><strong>${total.toLocaleString()} VND</strong><small>Shared + personal expenses</small></div><div class="expense-focus-grid"><div class="expense-focus-card"><h3>Personal Spend</h3>${spendHtml}</div><div class="expense-focus-card"><h3>Settlement</h3>${balanceHtml}</div></div></div><div class="expense-history-block"><h3>Transaction History</h3><p class="timestamp">最新交易會顯示喺最上面。</p><div class="transaction-scroll">${sorted.length?sorted.map(expenseCard4C2).join(''):'<p>No transactions yet.</p>'}</div></div>`;
+      const spendHtml=FRIEND_ORDER.map(k=>`<p>${labelFor(k)}<br><strong>${Math.round(personalSpend[k]||0).toLocaleString()} VND</strong></p>`).join('');
+      const balanceHtml=FRIEND_ORDER.map(k=>{const v=balance[k]||0;return `<p>${labelFor(k)}<br><strong>${v>=0?'Receive':'Owes'} ${Math.abs(Math.round(v)).toLocaleString()} VND</strong></p>`;}).join('');
+      pageBox.innerHTML=`<div class="expense-dashboard-v33"><div class="expense-total-card"><span>Trip Total</span><strong>${total.toLocaleString()} VND</strong><small>Shared + personal expenses</small></div><div class="expense-focus-grid"><div class="expense-focus-card"><h3>Personal Spend</h3>${spendHtml}</div><div class="expense-focus-card"><h3>Settlement</h3>${balanceHtml}</div></div></div><div class="expense-history-block"><h3>Transaction History</h3><p class="timestamp">最新交易會顯示喺最上面。</p><div class="transaction-scroll">${sorted.length?sorted.map(expenseCard).join(''):'<p>No transactions yet.</p>'}</div></div>`;
     }
-    ensureToolHistory4C2();
+    ensureToolHistory();
     window.renderToolTransactionHistory();
   };
 
   window.editExpense=function(i){
-    const arr=readExpenses4C2();
+    const arr=readExpenses();
     const e=arr[i]; if(!e) return;
-    if(typeof editingExpenseIndex!=='undefined') editingExpenseIndex=i;
-    ensurePaidByUI4C2();
+    editingExpenseIndex=i;
+    ensurePaidByUI();
     const item=document.getElementById('expenseItem'); if(item) item.value=e.item||'';
     const total=document.getElementById('expenseTotal'); if(total) total.value=e.total||'';
-    setSelectValue4C2('expensePaidBy', e.paidBy || 'crystal');
+    setSelectValue('expensePaidBy',e.paidBy||'crystal');
     const personal=(e.type==='personal');
     const personalBox=document.getElementById('expensePersonal'); if(personalBox) personalBox.checked=personal;
     const consumed=document.getElementById('expenseConsumedBy');
     if(consumed){
       consumed.value=e.consumedBy || ((e.split||[])[0]) || e.paidBy || 'crystal';
-      consumed.dataset.manual = personal && consumed.value !== e.paidBy ? 'true':'false';
+      consumed.dataset.manual=personal && consumed.value!==e.paidBy ? 'true':'false';
     }
     document.querySelectorAll('#expenseModal input[data-split]').forEach(x=>x.checked=(e.split||[]).includes(x.value));
-    try{ if(typeof updateExpenseMode==='function') updateExpenseMode(); }catch(e){}
+    try{updateExpenseMode();}catch(e){}
     const title=document.getElementById('expenseModalTitle'); if(title) title.textContent='✏️ Edit Expense';
     const save=document.getElementById('expenseSaveButton'); if(save) save.textContent='Update Expense';
     const modal=document.getElementById('expenseModal'); if(modal) modal.classList.add('show');
-    updatePaidByDisplay4C2();
+    updatePaidByDisplay();
   };
 
   window.deleteExpense=function(i){
-    const arr=readExpenses4C2();
+    const arr=readExpenses();
     if(!arr[i]) return;
     arr.splice(i,1);
-    writeExpenses4C2(arr);
-    if(typeof editingExpenseIndex!=='undefined' && editingExpenseIndex===i) editingExpenseIndex=null;
+    writeExpenses(arr);
+    if(editingExpenseIndex===i) editingExpenseIndex=null;
     window.renderExpenses();
   };
 
+  window.resetExpenseForm=resetExpenseForm;
   document.addEventListener('DOMContentLoaded',()=>{
-    ensurePaidByUI4C2();
+    ensurePaidByUI();
+    updatePaidByDisplay();
     window.renderExpenses();
   });
 })();
