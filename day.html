@@ -30,6 +30,8 @@
       const label = place.title ? `${place.title} Guide` : 'Guide';
       return `<button onclick="location.href='place.html?id=${esc(key)}'">${esc(label)}</button>`;
     }).join('');
+    const actionCount = guideIds.length + (item.showShoppingDirectory ? 1 : 0) + (item.map ? 1 : 0) + 1;
+    const actionClass = actionCount > 3 ? 'timeline-actions timeline-actions--multi' : 'timeline-actions';
     return `
     <div class="timeline-item" id="${esc(item.id)}">
       <div class="timeline-time">${esc(item.time)}</div>
@@ -37,7 +39,7 @@
         <h3>${esc(item.title)}</h3>
         ${detailHtml}
         ${routeHtml}
-        <div class="timeline-actions">
+        <div class="${actionClass}">
           ${directoryHtml}${guideHtml}
           ${mapHtml}
           <button onclick="openMomentsModal('${esc(item.id)}')">Moment</button>

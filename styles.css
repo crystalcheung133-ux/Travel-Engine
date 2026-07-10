@@ -1324,3 +1324,20 @@ body.home-bg main.dashboard.home-premium.home-v37{height:auto!important;max-heig
 body.home-bg section.home-brand-card.v37-dashboard-home{transform:none!important;max-height:none!important;margin:0 auto!important}}
 /* Mobile: keep the compact one-screen feel without clipping. */
 @media (max-width:720px){body.home-bg main.dashboard.home-premium.home-v37{overflow:visible!important}}
+
+/* Stage 4F-S1E: multi-guide day cards use an adaptive mobile grid. */
+@media (max-width:720px){
+  .timeline-actions.timeline-actions--multi{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:9px!important;
+  }
+  .timeline-actions.timeline-actions--multi button,
+  .timeline-actions.timeline-actions--multi a{
+    border-radius:22px!important;
+    min-height:54px!important;
+    padding:10px 12px!important;
+    font-size:14px!important;
+    line-height:1.15!important;
+    overflow-wrap:anywhere;
+  }
+}
