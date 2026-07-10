@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ccmv-travel-engine-stage4f-r-runtime-chain-consolidation';
+const CACHE_NAME = 'ccmv-travel-engine-stage4f-s1-guide-category-canonical';
 const ASSETS = [
   './',
   './index.html',

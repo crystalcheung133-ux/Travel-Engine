@@ -65,7 +65,13 @@ function updateFriendLabels(){const label=FRIENDS[getFriend()]||'👓 Crystal';d
 function openFriendModal(){$('mamaModal').classList.add('show')} function closeFriendModal(){$('mamaModal').classList.remove('show')}
 
 function openGuideCategory(cat){
- const list=(CATEGORIES[cat]||[]).slice().sort((a,b)=>a.title.localeCompare(b.title));
+ const list=(CATEGORIES[cat]||[]).slice().sort((a,b)=>String(a.title||'').localeCompare(String(b.title||'')));
+ if(cat==='SHOP'){
+  const directoryRow=`<button onclick="location.href='guide.html#shopping-directory'"><span><span class="guide-list-title">🛍 Shopping Directory</span><span class="guide-list-sub">Optional shops · Near · Best with Day</span></span><span>↓</span></button>`;
+  const rows=directoryRow+list.map(i=>`<button onclick="goPlace('${i.key}')"><span><span class="guide-list-title">${i.emoji} ${i.title}</span><span class="guide-list-sub">${i.sub||''}</span></span><span>›</span></button>`).join('');
+  $('guideModalContent').innerHTML=`<p class="kicker">Guide</p><h2>SHOP</h2><div class="category-pop-list">${rows}</div>`;
+  closeMiniMenus();$('guideModal').classList.add('show');return;
+ }
  if(list.length===1){closeMiniMenus();openGuideModal(list[0].key);return;}
  const rows=list.map(i=>`<button onclick="goPlace('${i.key}')"><span><span class="guide-list-title">${i.emoji} ${i.title}</span><span class="guide-list-sub">${i.sub||''}</span></span><span>›</span></button>`).join('');
  $('guideModalContent').innerHTML=`<p class="kicker">Guide</p><h2>${cat}</h2><div class="category-pop-list">${rows}</div>`;
@@ -147,7 +153,7 @@ function openTripCard(key) {
   const content = document.getElementById('tripModalContent');
   const modal = document.getElementById('tripModal');
   if (!content || !modal) return;
-  content.innerHTML = `<div class="trip-onepage"><p class="kicker">Trip</p><h2>${t.title}</h2>${t.body}<div class="guide-next-row"><button class="pill" onclick="openTripCard('${prev}')">‹ Previous</button><button class="pill" onclick="openTripCard('${next}')">Next ›</button></div><p class="timestamp">Build · Stage 4F-R</p></div>`;
+  content.innerHTML = `<div class="trip-onepage"><p class="kicker">Trip</p><h2>${t.title}</h2>${t.body}<div class="guide-next-row"><button class="pill" onclick="openTripCard('${prev}')">‹ Previous</button><button class="pill" onclick="openTripCard('${next}')">Next ›</button></div><p class="timestamp">Build · Stage 4F-S1</p></div>`;
   modal.classList.add('show');
   const sheet=document.querySelector('#tripModal .trip-sheet');
   if(sheet) sheet.scrollTop=0;
@@ -232,18 +238,6 @@ document.addEventListener('keydown', function(e){
     document.querySelectorAll('.guide-modal,.moments-modal,.unexpected-modal,.tools-modal,.mama-modal,.trip-modal').forEach(m=>m.classList.remove('show'));
   }
 });
-
-/* v3.1 Shopping Directory shortcut in Guide toolbar */
-const _shopDirectoryOpenGuideCategory = openGuideCategory;
-openGuideCategory = function(cat){
-  if(cat === 'SHOP'){
-    const list=(CATEGORIES[cat]||[]).slice().sort((a,b)=>String(a.title||'').localeCompare(String(b.title||'')));
-    const rows=`<button onclick="location.href='guide.html#shopping-directory'"><span><span class="guide-list-title">🛍 Shopping Directory</span><span class="guide-list-sub">Optional shops · Near · Best with Day</span></span><span>↓</span></button>` + list.map(i=>`<button onclick="goPlace('${i.key}')"><span><span class="guide-list-title">${i.emoji} ${i.title}</span><span class="guide-list-sub">${i.sub||''}</span></span><span>›</span></button>`).join('');
-    document.getElementById('guideModalContent').innerHTML=`<p class="kicker">Guide</p><h2>SHOP</h2><div class="category-pop-list">${rows}</div>`;
-    closeMiniMenus();document.getElementById('guideModal').classList.add('show');return;
-  }
-  return _shopDirectoryOpenGuideCategory(cat);
-};
 
 /* Stage 1 cleanup note: PLACES.general (the fallback "Moments" place card) used to be
    injected here at runtime. It is now defined canonically in data.js, so nothing to do here. */
