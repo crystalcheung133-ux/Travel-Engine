@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ccmv-travel-engine-stage4f-h-unused-mama-sheet-alias-cleanup';
+const CACHE_NAME = 'ccmv-travel-engine-stage4f-j-unused-journey-alias-cleanup';
 const ASSETS = [
   './',
   './index.html',
