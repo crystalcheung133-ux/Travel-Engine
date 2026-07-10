@@ -64,10 +64,30 @@ function setFriend(k){
 function updateFriendLabels(){const label=FRIENDS[getFriend()]||'👓 Crystal';document.querySelectorAll('[data-friend-label]').forEach(e=>e.textContent=label);}
 function openFriendModal(){$('mamaModal').classList.add('show')} function closeFriendModal(){$('mamaModal').classList.remove('show')}
 
+
+function applyGuideHashView(){
+ const directory=document.getElementById('shopping-directory');
+ const main=directory?.closest('main');
+ if(!directory||!main)return;
+ const directoryOnly=location.hash==='#shopping-directory';
+ Array.from(main.children).forEach(el=>{el.hidden=directoryOnly&&el!==directory;});
+ document.body.classList.toggle('shopping-directory-view',directoryOnly);
+ if(directoryOnly)requestAnimationFrame(()=>window.scrollTo({top:0,left:0,behavior:'auto'}));
+}
+function openShoppingDirectoryView(){
+ closeGuideModal();closeMiniMenus();
+ const onGuide=/guide\.html$/.test(location.pathname)||location.pathname.endsWith('/guide.html');
+ if(!onGuide){location.href='guide.html#shopping-directory';return;}
+ if(location.hash==='#shopping-directory')applyGuideHashView();
+ else location.hash='shopping-directory';
+}
+window.addEventListener('hashchange',applyGuideHashView);
+document.addEventListener('DOMContentLoaded',applyGuideHashView);
+
 function openGuideCategory(cat){
  const list=(CATEGORIES[cat]||[]).slice().sort((a,b)=>String(a.title||'').localeCompare(String(b.title||'')));
  if(cat==='SHOP'){
-  const directoryRow=`<button onclick="location.href='guide.html#shopping-directory'"><span><span class="guide-list-title">🛍 Shopping Directory</span><span class="guide-list-sub">Optional shops · Near · Best with Day</span></span><span>↓</span></button>`;
+  const directoryRow=`<button onclick="openShoppingDirectoryView()"><span><span class="guide-list-title">🛍 Shopping Directory</span><span class="guide-list-sub">Optional shops · Near · Best with Day</span></span><span>↓</span></button>`;
   const rows=directoryRow+list.map(i=>`<button onclick="goPlace('${i.key}')"><span><span class="guide-list-title">${i.emoji} ${i.title}</span><span class="guide-list-sub">${i.sub||''}</span></span><span>›</span></button>`).join('');
   $('guideModalContent').innerHTML=`<p class="kicker">Guide</p><h2>SHOP</h2><div class="category-pop-list">${rows}</div>`;
   closeMiniMenus();$('guideModal').classList.add('show');return;
@@ -153,7 +173,7 @@ function openTripCard(key) {
   const content = document.getElementById('tripModalContent');
   const modal = document.getElementById('tripModal');
   if (!content || !modal) return;
-  content.innerHTML = `<div class="trip-onepage"><p class="kicker">Trip</p><h2>${t.title}</h2>${t.body}<div class="guide-next-row"><button class="pill" onclick="openTripCard('${prev}')">‹ Previous</button><button class="pill" onclick="openTripCard('${next}')">Next ›</button></div><p class="timestamp">Build · Stage 4F-S1</p></div>`;
+  content.innerHTML = `<div class="trip-onepage"><p class="kicker">Trip</p><h2>${t.title}</h2>${t.body}<div class="guide-next-row"><button class="pill" onclick="openTripCard('${prev}')">‹ Previous</button><button class="pill" onclick="openTripCard('${next}')">Next ›</button></div><p class="timestamp">Build · Stage 4F-S1A</p></div>`;
   modal.classList.add('show');
   const sheet=document.querySelector('#tripModal .trip-sheet');
   if(sheet) sheet.scrollTop=0;

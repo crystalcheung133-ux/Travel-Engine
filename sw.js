@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ccmv-travel-engine-stage4f-s1-guide-category-canonical';
+const CACHE_NAME = 'ccmv-travel-engine-stage4f-s1a-shopping-directory-only';
 const ASSETS = [
   './',
   './index.html',
