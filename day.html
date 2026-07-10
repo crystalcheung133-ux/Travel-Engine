@@ -20,7 +20,18 @@
   const items = data.items.map(item => {
     const detailHtml = (item.details || []).map(text => `<p>${esc(text)}</p>`).join('');
     const routeHtml = item.route ? `<div class="route-hint"><strong>🚕 To next stop</strong><br/>${esc(item.route)}</div>` : '';
-    const mapHtml = item.map ? `<a href="${esc(item.map)}" target="_blank">Map</a>` : '';
+    const mapHtml = item.map ? `<a class="timeline-action timeline-action--map" href="${esc(item.map)}" target="_blank">Map</a>` : '';
+    const guideIds = Array.isArray(item.guideIds) && item.guideIds.length ? item.guideIds : [item.placeId || item.id];
+    const directoryHtml = item.showShoppingDirectory
+      ? `<button class="timeline-action timeline-action--directory" onclick="location.href='guide.html#shopping-directory'">Shopping List</button>`
+      : '';
+    const guideHtml = guideIds.map(key => {
+      const place = (typeof PLACES !== 'undefined' && PLACES[key]) || {};
+      const label = place.title ? `${place.title} Guide` : 'Guide';
+      return `<button class="timeline-action timeline-action--guide" onclick="location.href='place.html?id=${esc(key)}'">${esc(label)}</button>`;
+    }).join('');
+    const actionCount = guideIds.length + (item.showShoppingDirectory ? 1 : 0) + (item.map ? 1 : 0) + 1;
+    const actionClass = actionCount > 3 ? 'timeline-actions timeline-actions--multi' : 'timeline-actions';
     return `
     <div class="timeline-item" id="${esc(item.id)}">
       <div class="timeline-time">${esc(item.time)}</div>
@@ -28,15 +39,32 @@
         <h3>${esc(item.title)}</h3>
         ${detailHtml}
         ${routeHtml}
-        <div class="timeline-actions">
-          <button onclick="location.href='place.html?id=${esc(item.id)}'">Guide</button>
+        <div class="${actionClass}">
+          ${directoryHtml}${guideHtml}
           ${mapHtml}
-          <button onclick="openMomentsModal('${esc(item.id)}')">Moment</button>
+          <button class="timeline-action timeline-action--moment" onclick="openMomentsModal('${esc(item.id)}')">Moment</button>
         </div>
       </div>
     </div>`;
   }).join('');
   root.innerHTML = `<div class="page-hero"><p class="kicker">${esc(data.kicker)}</p><h1>${esc(data.heading)}</h1><div class="time-legend">${legend}</div></div><section class="timeline">${items}</section>`;
+
+  // Stage 4F-L: native hash scrolling can run before dynamic cards exist.
+  // Re-resolve the requested card after render and offset the sticky top bar.
+  function scrollToRequestedCard(){
+    if(!location.hash) return;
+    let targetId;
+    try{ targetId = decodeURIComponent(location.hash.slice(1)); }
+    catch(e){ targetId = location.hash.slice(1); }
+    const target = document.getElementById(targetId);
+    if(!target) return;
+    const nav = document.querySelector('.site-nav');
+    const navOffset = (nav ? nav.getBoundingClientRect().height : 0) + 12;
+    const top = target.getBoundingClientRect().top + window.scrollY - navOffset;
+    window.scrollTo({top:Math.max(0, top), behavior:'auto'});
+  }
+  requestAnimationFrame(()=>requestAnimationFrame(scrollToRequestedCard));
+  window.addEventListener('hashchange', scrollToRequestedCard);
 
   // Stage 4E-1: restore swipe between dynamic day pages.
   let touchStartX = 0;

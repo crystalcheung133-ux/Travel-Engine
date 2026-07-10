@@ -1,57 +1,95 @@
-# Engine Change Protocol
+# CCMV Travel Engine Change Protocol — Stage 4F-T Frozen Master
 
-Follow this protocol for every future change, regardless of whether the work is done by ChatGPT, Claude, Gemini, or manually.
+Use this protocol for every future change, regardless of who performs it.
 
-## Before changing code
+## 1. Establish the baseline
 
-1. Identify the active source.
-   - Example: Day content = `data.js` → `ITINERARY_DATA` → `day.html?day=...`
-   - Example: Place content = `data.js` → `PLACES` → `place.html?id=...`
-2. State the exact files expected to change.
-3. Avoid mixing architecture, data, logic, and UI in one patch.
+- Use the latest version that has passed deploy regression.
+- State the visible Build marker and service-worker cache name.
+- Do not mix files from an older ZIP into a newer baseline.
 
-## Patch size rule
+## 2. Identify the Active Source
 
-Small change = patch ZIP only.
+Before editing, trace the complete path:
 
-- Data update: usually `data.js` + `sw.js`
-- UI polish: usually `styles.css` + `sw.js`
-- Behavior fix: usually `script.js` + `sw.js`
-- Loading markup: usually `index.html` + `styles.css` + `sw.js`
+- Day content: `data.js` → `ITINERARY_DATA` → inline renderer in `day.html` → `day.html?day=N`
+- Place content: `data.js` → `PLACES` → inline renderer in `place.html` → `place.html?id=...`
+- Shared behavior: canonical function/module in `script.js`
+- Visual styling: canonical rule in `styles.css`
+- Cache delivery: `sw.js`
 
-Full ZIP should be saved only at major master checkpoints.
+If a visible change does not appear, investigate Active Source, deploy state and cache before adding another patch.
 
-## Deployment verification
+## 3. Patch discipline
 
-After deploy, verify by evidence, not memory:
+- Data-only update: usually `data.js`, `script.js` Build marker and `sw.js`.
+- UI-only update: usually `styles.css`, `script.js` Build marker and `sw.js`.
+- Behavior change: usually `script.js` and `sw.js`; include the relevant HTML only when its renderer/markup must change.
+- Deliver a changed-files ZIP for routine patches.
+- Deliver a full production ZIP only for a major verified master checkpoint.
+- Do not place stage reports inside the production ZIP.
 
-1. Check Vercel production commit hash matches GitHub latest commit.
-2. Open `/sw.js` and confirm the expected `CACHE_NAME`.
-3. Test a visible observable change.
-4. If live site does not change, do not patch again until source/deploy/cache is proven.
+## 4. No-override rule
 
-## Regression checklist
+Do not solve a problem by automatically adding another later CSS rule or runtime function reassignment.
 
-For every meaningful change:
+First determine:
 
-- Home / loading
-- Trip modal
-- `day.html?day=1` through `day.html?day=5`
-- Guide
-- `place.html?id=fusion`, `place.html?id=lune`, one spa, one shop
-- Moments add/edit/delete
-- Expenses add/edit/delete/totals
-- Bottom navigation
-- PWA reload / offline fallback
+- which declaration/function currently wins,
+- whether an earlier rule/function is dead,
+- whether the canonical source can be edited directly,
+- whether service-worker cache or an old deploy is hiding the change.
 
-## Stop rule
+Runtime wrappers and duplicate canonical modules require a dedicated audit and regression pilot before consolidation.
 
-If deploy output looks unchanged, stop and diagnose:
+## 5. Build and cache evidence
 
-- Wrong active source?
-- GitHub commit not deployed?
-- Wrong Vercel project/domain?
-- Service worker cache?
-- CSS override later in file?
+Every deploy patch must:
 
-Do not keep generating patches without identifying the cause.
+1. update the visible `Build · ...` marker in `script.js`,
+2. use a new `CACHE_NAME` in `sw.js`,
+3. verify the expected files exist in the service-worker precache list,
+4. confirm the deployed site shows the new Build marker.
+
+Do not mark a deploy PASS without visible version evidence.
+
+## 6. Regression scope
+
+Choose checks based on the changed area, but a meaningful engine patch should cover:
+
+- Home and splash
+- Bottom navigation and mini menus
+- Trip cards
+- Day 1 and Day 5 plus the changed Day/activity
+- Guide categories, Shopping Directory and Guide → Day anchors
+- one restaurant, one spa and one shop Place page
+- Choose Friend
+- Moments add/edit/delete/history
+- Expenses shared/personal add/edit/delete, totals, settlement and history
+- PWA close/reopen and offline fallback where relevant
+
+## 7. Stop conditions
+
+Stop patching and diagnose when:
+
+- UI does not reflect the changed Build,
+- `/sw.js` shows the wrong cache name,
+- the Vercel production deploy does not match the intended commit,
+- an HTML `src`, CSS `content:url`, later selector or runtime reassignment creates Active Source ambiguity,
+- a malformed comment or syntax issue can make edited code non-operative.
+
+## 8. Engine boundaries
+
+- Do not redraw CCMV logo assets.
+- Do not restore deleted Day or Place HTML copies.
+- Do not change stored Moments/Expenses schemas without an explicit migration plan.
+- Preserve existing localStorage compatibility reads unless a dedicated migration removes them safely.
+- Companion remains the warmer, more active member of the CCMV brand family.
+
+## 9. Acceptance sequence
+
+For cleanup or architecture work:
+
+**Audit → Patch → Static Verification → Deploy → Regression Test → PASS → Next step**
+
+This package passed the Stage 4F-T static freeze verification. Future engine changes must create a new Build marker and cache name; do not silently edit the frozen baseline. A working deploy is not automatically a clean replacement baseline until regression testing passes.

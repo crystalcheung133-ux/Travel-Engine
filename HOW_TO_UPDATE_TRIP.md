@@ -1,45 +1,65 @@
-# How To Update This Trip
+# How To Update a Trip — Stage 4F-T Frozen Master
 
-Use this file when updating the Companion after Planner feedback or booking confirmations arrive.
+Use this guide to turn the Travel Engine master into an updated Companion without recreating HTML pages.
 
-## Main rule
+## Default rule: data-only update
 
-Do not edit generated HTML pages for content updates. Update the canonical data source instead.
+For normal trip-content changes, edit `data.js`, bump the cache name in `sw.js`, deploy, and regression-test. Do not create individual Day or Place files.
 
-## Update locations
+## Where to update
 
-| Update type | Edit this file | Notes |
+| Change | Active source | Important notes |
 |---|---|---|
-| Day itinerary / timing / activity titles | `data.js` → `ITINERARY_DATA` | Keep stable `id`, `placeId`, and `bookingId` where possible |
-| Restaurant / shop / spa / attraction details | `data.js` → `PLACES` | This feeds `place.html?id=...`, guide, and day links |
-| Trip cards such as City / Stay / Flights | `data.js` → `TRIP_DATA` | Do not add Trip card overrides in `script.js` |
-| Booking confirmations | `data.js` → `BOOKINGS_DATA` | Use `status`, `reference`, `contact`, `paymentStatus`, `notes`, `reminders` |
-| Guide categories | `data.js` → guide/category structures | Keep `placeId` values aligned with `PLACES` keys |
-| Visual polish | `styles.css` | Do not change data or behavior for visual-only tasks |
-| Loading screen markup | `index.html` | CSS still lives in `styles.css` |
-| Moments / Expenses behavior | `script.js` | Check current function path before editing |
-| PWA cache | `sw.js` | Bump `CACHE_NAME` after app file changes |
+| Day timing, titles, descriptions and activity order | `data.js` → `ITINERARY_DATA` | Keep stable activity `id` values whenever possible |
+| Multiple guides on one Day activity | Activity data in `ITINERARY_DATA` | Use the documented `guideIds` array; use `showShoppingDirectory` only when the Shopping List button is required |
+| Restaurant, shop, spa, attraction or hotel details | `data.js` → `PLACES` | Feeds Place pages, Guide and Day links |
+| Guide category membership/order | `data.js` category and guide-order structures | Every place ID must exist in `PLACES` |
+| Trip cards such as Stay, Flights and Essentials | `data.js` → `TRIP_DATA` / `TRIP_ORDER` | Do not reproduce Trip content in `script.js` |
+| Booking status and references | Booking structures in `data.js` | Keep stable booking IDs |
+| Friend labels | `data.js` → `FRIENDS` | Test Choose Friend, Moments and Expenses |
+| Pure visual change | `styles.css` | Edit the active rule; do not append a compensating override without tracing the cascade |
+| Shared Day rendering/action structure | `day.html` | Required only when data fields alone cannot express the change |
+| Shared Place rendering structure | `place.html` | Required only for renderer changes, not place-content edits |
+| Behavior, modal or state change | `script.js` | Confirm the canonical function/module before editing |
+| Home or splash markup | `index.html` | Styling remains in `styles.css` |
+| Cached app files | `sw.js` | Bump `CACHE_NAME` on every deploy patch |
 
 ## Stable ID rules
 
-Use stable lowercase IDs with hyphens. Do not derive IDs from display titles if the title may change.
+Use lowercase hyphenated IDs and treat them as persistent keys.
 
 Examples:
 
-- Place ID: `omakase-tiger`
-- Day activity ID: `d1-dinner-omakase-tiger`
-- Booking ID: `booking-omakase-tiger`
+- Place: `omakase-tiger`
+- Activity: `d1-dinner-omakase-tiger`
+- Booking: `booking-omakase-tiger`
 
-Changing the display name is safe. Changing IDs can break links, comments, moments, bookings, or future generated updates.
+Changing display text is normally safe. Changing an ID can break Day anchors, Guide links, Moments associations, bookings or stored data.
 
-## After every data update
+## Normal update workflow
 
-Test these paths:
+1. Start from the latest deploy-PASS baseline.
+2. Identify the active source before editing.
+3. Change the smallest necessary file set.
+4. Update the visible Build marker in `script.js`.
+5. Bump `CACHE_NAME` in `sw.js`.
+6. Deliver a changed-files ZIP unless creating a major master checkpoint.
+7. Deploy and verify the visible Build marker before judging the UI.
+8. If the live site appears unchanged, stop and check GitHub/Vercel deployment, `/sw.js`, service-worker cache and Active Source before creating another patch.
 
-1. `day.html?day=1` through `day.html?day=5`
-2. `place.html?id=fusion` and one restaurant / one spa / one shop
-3. Guide category links
-4. Trip modal cards
-5. Moments add/edit/delete
-6. Expenses add/edit/delete/totals
-7. PWA reload after cache update
+## Data-update regression
+
+At minimum test:
+
+- `day.html?day=1` through `day.html?day=5`
+- Guide → Day anchor for one early and one late activity
+- `place.html?id=fusion`, one restaurant, one spa and one shop
+- Guide categories and Shopping Directory
+- Trip cards
+- Moments add/edit/delete
+- Expenses shared/personal add, edit, delete, totals and settlement
+- PWA close/reopen after the new service worker activates
+
+## Architecture boundary
+
+Ordinary new-trip generation should require replacement of trip data and assets, not changes to HTML structure. Renderer changes are engine changes and must follow `ENGINE_CHANGE_PROTOCOL.md`.
