@@ -10,7 +10,6 @@ a{color:inherit;text-decoration:none}
 h1,h2{font-family:"Cormorant Garamond",serif;line-height:.95;margin:8px 0 14px}
 .dash-hero{background:#fffdf8;border:1px solid #d8c5b1;border-radius:34px;padding:28px 22px;text-align:center;box-shadow:0 24px 80px rgba(54,39,24,.12)}
 .dash-hero h1{font-size:clamp(48px,12vw,88px)}
-.dash-date{font-weight:750;color:#3a3129;font-size:17px}
 .countdown{font-size:29px;font-weight:800;margin-top:18px}
 .dash-card,.prose-block,.trip-card{background:var(--card);border:1px solid var(--line);border-radius:28px;padding:22px;margin:16px 0;box-shadow:0 12px 48px rgba(54,39,24,.06)}
 .progress-bar{height:13px;background:#efe2d2;border-radius:999px;overflow:hidden;margin:12px 0}
@@ -60,7 +59,6 @@ h1,h2{font-family:"Cormorant Garamond",serif;line-height:.95;margin:8px 0 14px}
 .fact-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
 .fact{border:1px solid var(--line);border-radius:18px;background:#fff7ed;padding:13px}
 .fact strong{display:block}
-.expense-list{display:grid;gap:10px}
 .expense-card{border:1px solid var(--line);background:#fff7ed;border-radius:18px;padding:13px}
 @media(max-width:760px){.friend-progress,.fact-grid{grid-template-columns:repeat(2,1fr)}
 .timeline-item{grid-template-columns:70px 1fr}
@@ -75,8 +73,6 @@ h1,h2{font-family:"Cormorant Garamond",serif;line-height:.95;margin:8px 0 14px}
 /* v2.1.3 navigation + moments + expenses */
 .mood-btn.active{background:#ead8c5;border-color:#8a4f2d;font-weight:700}
 .timestamp{font-size:13px;color:var(--muted)}
-.expense-page-grid{display:grid;gap:14px}
-.expense-summary{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
 @media(max-width:760px){body.home-bg::before{background-size:115% auto;background-position:center 130px}
 .app-nav a,.app-nav button{font-size:20px}
 .app-nav small{font-size:11px}}
@@ -86,7 +82,6 @@ h1,h2{font-family:"Cormorant Garamond",serif;line-height:.95;margin:8px 0 14px}
 /* v2.1.7 expense personal/shared */
 #consumedByBlock select,#expensePaidBy{width:100%;margin:8px 0 12px}
 #expensePersonal{width:20px;height:20px}
-.expense-summary-block{border-top:1px solid var(--line);padding-top:12px;margin-top:12px}
 /* v2.1.8 polish */
 .dash-card .progress-meta{font-weight:700;color:var(--ink);margin:6px 0}
 .latest-transactions{border-top:1px solid var(--line);margin-top:16px;padding-top:14px}
@@ -124,8 +119,6 @@ h1,h2{font-family:"Cormorant Garamond",serif;line-height:.95;margin:8px 0 14px}
 .route-hint strong{color:var(--accent)}
 .home-bg .dash-hero{padding:20px 18px;border-radius:28px}
 .home-bg .dash-hero h1{font-size:clamp(38px,10vw,68px);line-height:.9;margin:0 0 10px}
-.home-bg .hero-subtitle{margin:0;font-size:.95rem}
-.home-bg .dash-date{margin:6px 0;font-size:15px}
 .home-bg .countdown{font-size:23px;margin-top:10px}
 .home-bg .dash-card{margin-top:12px;padding:18px 18px;border-radius:26px}
 .home-bg .dash-card h2{font-size:20px;margin:0 0 6px}
@@ -170,7 +163,6 @@ a.pill[href*="maps.google"]{background:#fff7eb!important;color:#2b251f!important
 .dash-card,.prose-block,.trip-card,.timeline-item,.day-summary a{overflow:visible!important}
 /* v2.5 premium home + guide routing */
 .home-brand-card:before{content:"";position:absolute;inset:14px;border:1px solid rgba(138,79,45,.18);border-radius:26px;pointer-events:none}
-.home-countdown{font-size:22px;margin-top:10px}
 .home-launch-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
 .home-launch-grid a{background:#fffaf2;border:1px solid var(--line);border-radius:22px;padding:14px 10px;text-align:center;box-shadow:0 10px 30px rgba(54,39,24,.05)}
 .home-launch-grid strong{display:block;font-size:16px;color:var(--ink)}
@@ -188,7 +180,6 @@ a.pill[href*="maps.google"]{background:#fff7eb!important;color:#2b251f!important
 .home-brand-card h1{font-size:38px}
 .home-tagline{font-size:11px}
 .home-launch-grid{grid-template-columns:repeat(2,1fr)}
-.home-countdown{font-size:19px}
 .timeline-item{grid-template-columns:64px minmax(0,1fr)!important;padding:15px 13px}
 .timeline-actions{grid-template-columns:1fr 1fr 1fr}}
 /* v2.5.1 QA fix: compact checklist, readable days, expenses above-the-fold, premium blended logo */
@@ -214,7 +205,6 @@ a.pill[href*="maps.google"]{background:#fff7eb!important;color:#2b251f!important
 .timeline-actions button,.timeline-actions a{min-width:0!important;white-space:normal!important;line-height:1.2!important;font-size:13px!important;padding:9px 6px!important;min-height:38px!important}
 /* Expenses: summary and settlement first; history below */
 .expense-page-shell .page-hero h1{font-size:clamp(42px,10vw,70px)}
-.expense-top-panel{display:grid;gap:10px;margin-bottom:16px}
 .expense-total-card span{font-weight:800;color:var(--muted);font-size:13px;text-transform:uppercase;letter-spacing:.08em}
 .expense-mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 /* Home logo: use original colour artwork blended into paper, not extracted cutout */

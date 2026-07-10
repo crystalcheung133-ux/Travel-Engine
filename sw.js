@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ccmv-travel-engine-stage4f-l-guide-day-anchor-fix';
+const CACHE_NAME = 'ccmv-travel-engine-stage4f-n-unused-expense-layout-cleanup';
 const ASSETS = [
   './',
   './index.html',
