@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ccmv-travel-engine-stage4f-c-expense-legacy-css-cleanup';
+const CACHE_NAME = 'ccmv-travel-engine-stage4f-d-home-legacy-css-cleanup';
 const ASSETS = [
   './',
   './index.html',
