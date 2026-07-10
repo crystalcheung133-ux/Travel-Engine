@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ccmv-travel-engine-stage4f-s1e-multiguide-mobile-buttons';
+const CACHE_NAME = 'ccmv-travel-engine-stage4f-s1f-day-action-layout';
 const ASSETS = [
   './',
   './index.html',
