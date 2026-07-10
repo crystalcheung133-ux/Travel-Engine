@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ccmv-travel-engine-stage4d-hygiene-docs';
+const CACHE_NAME = 'ccmv-travel-engine-stage4f-h-unused-mama-sheet-alias-cleanup';
 const ASSETS = [
   './',
   './index.html',
@@ -13,7 +13,6 @@ const ASSETS = [
   './icon-512.png',
   './logo-watermark-monogram.png',
   './logo-monogram-transparent.png',
-  './splash-logo.png',
   './ccmv-logo-calibrated.png',
   './guide.html',
   './itinerary.html',
