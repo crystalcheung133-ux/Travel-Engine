@@ -427,6 +427,8 @@ h3{font-size:20px}
 /* v3.9 Day 2 flow and page consistency */
 .expense-page-shell .page-hero{margin-bottom:18px;display:block}
 .expense-page-shell .page-action-row,.page-action-row{margin-top:16px;display:flex;gap:10px;flex-wrap:wrap}
+.expense-export-action{background:#fffaf2!important;border-color:rgba(111,143,107,.38)!important;color:#31513a!important}
+@media(min-width:721px){body.expenses-page .expense-history-block .transaction-scroll{max-height:none!important;overflow:visible!important;padding-right:0!important}}
 .primary-action{display:inline-flex;align-items:center;justify-content:center;min-height:48px;border-radius:999px;padding:12px 18px;font-weight:850;box-shadow:0 10px 30px rgba(49,95,78,.12);font-size:16px!important;background:linear-gradient(180deg,#fffaf2,#f6e9d5)!important;border-color:rgba(138,79,45,.32)!important;color:#2b251f!important}
 @media(max-width:760px){.route-hint{font-size:16px}}
 /* v3.9.1 day2 + modal stability + outdoor readability refinements */
@@ -925,9 +927,9 @@ html body.expenses-page .page-action-row .primary-action{background:linear-gradi
 body.ccmv-splash-active{overflow:hidden}
 #ccmvSplash .splash-paper{position:absolute;inset:0;background:radial-gradient(circle at 20% 18%,rgba(139,111,82,.08) 0 1px,transparent 2px),radial-gradient(circle at 82% 68%,rgba(139,111,82,.055) 0 1px,transparent 2px);background-size:210px 220px,260px 250px;opacity:.10;display:block}
 #ccmvSplash .splash-glow{position:absolute;width:72vw;max-width:430px;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,rgba(255,255,250,.76),rgba(255,255,250,.22) 48%,transparent 72%);filter:blur(4px);animation:ccmvGlow 8s ease-in-out both;transform:translateY(-6vh);opacity:.58;display:block}
-#ccmvSplash .splash-content{position:relative;width:min(92vw,560px);text-align:center;transform:translateY(-1.8vh);padding:0 24px;display:block}
-#ccmvSplash .splash-logo{width:min(55vw,292px);display:block;margin:0 auto 30px;height:auto;max-height:none;object-fit:contain;aspect-ratio:1/1;border-radius:30px;padding:0;background:linear-gradient(180deg,rgba(248,240,229,.94),rgba(243,230,214,.88));border:1px solid rgba(204,181,153,.30);box-shadow:0 20px 58px rgba(84,61,39,.10),0 5px 18px rgba(84,61,39,.045),inset 0 1px 0 rgba(255,255,255,.42);filter:saturate(.96) contrast(.98);opacity:0;animation:ccmvLogo421 8s cubic-bezier(.22,.8,.22,1) both}
-#ccmvSplash .splash-line{margin:0 auto;font-size:clamp(34px,8.6vw,54px);line-height:1.04;letter-spacing:.005em;font-family:'Baskerville','Iowan Old Style','Palatino Linotype','Book Antiqua',Georgia,serif;font-style:normal;font-weight:600;text-align:center;color:#8b6842;text-shadow:0 1px 0 rgba(255,250,242,.45);opacity:0;animation:ccmvSlogan421 8s ease both}
+#ccmvSplash .splash-content{position:relative;width:min(92vw,560px);text-align:center;transform:none;padding:0 24px;display:block}
+#ccmvSplash .splash-logo{width:min(55vw,292px);display:block;margin:0 auto 30px;height:auto;max-height:none;object-fit:contain;aspect-ratio:1/1;border-radius:0;padding:0;background:transparent;border:0;box-shadow:none;filter:saturate(.96) contrast(.98) drop-shadow(0 18px 34px rgba(84,61,39,.12));position:relative;left:2.7%;opacity:0;animation:ccmvLogo421 8s cubic-bezier(.22,.8,.22,1) both}
+#ccmvSplash .splash-line{margin:0 auto;font-size:clamp(34px,8.6vw,54px);line-height:1.04;letter-spacing:.005em;font-family:'Baskerville','Iowan Old Style','Palatino Linotype','Book Antiqua',Georgia,serif;font-style:normal;font-weight:600;text-align:center;color:#8b6842;text-shadow:none;opacity:0;animation:ccmvSlogan421 8s ease both}
 #ccmvSplash .splash-destination{margin-top:28px;font-family:Avenir,Montserrat,system-ui,-apple-system,sans-serif;font-size:clamp(14px,3.6vw,20px);letter-spacing:.38em;line-height:1;text-transform:uppercase;font-weight:800;text-align:center;color:#8b6842;opacity:0;animation:ccmvVietnam421 8s ease both}
 #ccmvSplash .splash-fadeout{position:absolute;inset:0;background:var(--spl-cream);pointer-events:none;opacity:0;animation:ccmvOut 8s ease both}
 @keyframes ccmvGlow{0%{opacity:.2;transform:translateY(-6vh) scale(.9)}35%,100%{opacity:1;transform:translateY(-6vh) scale(1)}}
@@ -939,12 +941,12 @@ body.ccmv-splash-active{overflow:hidden}
    first, since a device can match BOTH this and the width query below — the
    width query below wins ties for shared properties on phones that match
    both, matching the original file's source order). */
-@media (max-height:720px){#ccmvSplash .splash-content{transform:translateY(-6vh)}
+@media (max-height:720px){#ccmvSplash .splash-content{transform:translateY(-2vh)}
 #ccmvSplash .splash-glow{transform:translateY(-6vh)}
 #ccmvSplash .splash-logo{width:min(82vw,440px);margin-bottom:24px}
 #ccmvSplash .splash-destination{margin-top:22px}}
-@media (max-width:520px){#ccmvSplash .splash-content{padding:0 18px;transform:translateY(-1.6vh)}
-#ccmvSplash .splash-logo{width:min(64vw,276px);margin-bottom:24px;border-radius:30px}
+@media (max-width:520px){#ccmvSplash .splash-content{padding:0 18px;transform:none}
+#ccmvSplash .splash-logo{width:min(64vw,276px);margin-bottom:24px;border-radius:0}
 #ccmvSplash .splash-line{font-size:clamp(34px,9.2vw,46px)}
 #ccmvSplash .splash-destination{font-size:13px;letter-spacing:.30em;margin-top:24px}}
 @media (prefers-reduced-motion: reduce){#ccmvSplash .splash-glow,#ccmvSplash .splash-logo,#ccmvSplash .splash-line,#ccmvSplash .splash-destination,#ccmvSplash .splash-fadeout{animation:none;opacity:1}}
@@ -1106,12 +1108,12 @@ body.expenses-page .page-hero::after,body.expenses-page .module-hero::after,
 .home-brand-card.v37-dashboard-home{min-height:auto!important;aspect-ratio:auto!important;display:flex;flex-direction:column;align-items:center!important;justify-content:center;text-align:center!important;position:relative;overflow:hidden!important;background:linear-gradient(180deg,rgba(255,253,248,.96),rgba(255,247,238,.92))!important;box-shadow:0 18px 60px rgba(54,39,24,.12)!important;border-color:rgba(214,194,174,.72)!important}
 .home-brand-card.v37-dashboard-home::before{content:""!important;display:block!important;width:96px!important;height:96px!important;margin:0 auto 12px!important;background:url('ccmv-logo-calibrated.png') center/contain no-repeat!important;border-radius:0!important;box-shadow:none!important;position:relative!important;z-index:2!important;filter:drop-shadow(0 10px 18px rgba(76,52,34,.10))!important}
 .home-brand-card.v37-dashboard-home .home-since{color:#8a5f36!important;letter-spacing:.28em!important;font-size:13px!important;font-weight:900!important;margin-bottom:12px!important}
-.home-brand-card.v37-dashboard-home h1{font-family:'Baskerville','Iowan Old Style','Palatino Linotype','Book Antiqua',Georgia,serif!important;font-size:clamp(58px,13vw,92px)!important;line-height:.84!important;letter-spacing:-.045em!important;font-weight:900!important;text-align:center!important;margin-left:auto!important;margin-right:auto!important;color:#2a211c!important;text-shadow:0 2px 0 rgba(255,255,255,.48),0 14px 28px rgba(68,43,28,.12)!important;margin:0 0 16px!important}
+.home-brand-card.v37-dashboard-home h1{font-family:'Baskerville','Iowan Old Style','Palatino Linotype','Book Antiqua',Georgia,serif!important;font-size:clamp(58px,13vw,92px)!important;line-height:.92!important;letter-spacing:-.045em!important;font-weight:900!important;text-align:center!important;margin-left:auto!important;margin-right:auto!important;color:#2a211c!important;text-shadow:0 2px 0 rgba(255,255,255,.48),0 14px 28px rgba(68,43,28,.12)!important;margin:0 0 24px!important;width:fit-content!important;padding:0 .16em .08em!important;background:linear-gradient(177deg,transparent 16%,rgba(244,205,211,.28) 17%,rgba(232,163,176,.48) 45%,rgba(246,211,216,.34) 78%,transparent 79%)!important}
 .home-brand-card.v37-dashboard-home h1 em{font-family:inherit!important;font-style:italic!important;font-weight:900!important;color:#2a211c!important}
 .home-brand-card.v37-dashboard-home .home-tagline{letter-spacing:.20em!important;font-weight:900!important;color:#625249!important;font-size:14px!important;text-transform:uppercase!important}
 @media(max-width:520px){.home-bg .site-nav .brand img{width:54px!important;height:54px!important}
 .home-brand-card.v37-dashboard-home::before{width:86px!important;height:86px!important;margin-bottom:10px!important}
-.home-brand-card.v37-dashboard-home h1{font-size:clamp(58px,15vw,72px)!important}
+.home-brand-card.v37-dashboard-home h1{font-size:clamp(58px,15vw,72px)!important;line-height:.90!important;margin-bottom:18px!important;padding-left:.10em!important;padding-right:.10em!important}
 .home-brand-card.v37-dashboard-home .home-tagline{font-size:12px!important;letter-spacing:.18em!important}}
 /* Bottom menu popups: fully opaque premium surface, so page underneath never shows through. */
 .mini-menu,
@@ -1281,6 +1283,8 @@ body.home-bg .live-card{min-height:78px!important}}
 .site-nav .brand img,
 body.home-bg nav.site-nav a.brand img{width:58px!important;height:46px!important;object-fit:contain!important;object-position:center!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;mix-blend-mode:multiply!important;opacity:.72!important;filter:saturate(.95) contrast(.95) drop-shadow(0 2px 3px rgba(91,66,38,.05))!important}
 .site-nav .brand{gap:12px!important}
+.site-nav .brand-mark{display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 auto!important}
+.site-nav .brand-mark img{display:block!important}
 @media(max-width:520px){.site-nav .brand img,
   body.home-bg nav.site-nav a.brand img{width:58px!important;height:46px!important}
 .site-nav .brand{font-size:21px!important}}

@@ -173,7 +173,7 @@ function openTripCard(key) {
   const content = document.getElementById('tripModalContent');
   const modal = document.getElementById('tripModal');
   if (!content || !modal) return;
-  content.innerHTML = `<div class="trip-onepage"><p class="kicker">Trip</p><h2>${t.title}</h2>${t.body}<div class="guide-next-row"><button class="pill" onclick="openTripCard('${prev}')">‹ Previous</button><button class="pill" onclick="openTripCard('${next}')">Next ›</button></div><p class="timestamp">Build · Stage 4F-T · FROZEN MASTER</p></div>`;
+  content.innerHTML = `<div class="trip-onepage"><p class="kicker">Trip</p><h2>${t.title}</h2>${t.body}<div class="guide-next-row"><button class="pill" onclick="openTripCard('${prev}')">‹ Previous</button><button class="pill" onclick="openTripCard('${next}')">Next ›</button></div><p class="timestamp">Build · Stage 4E-3 · UI POLISH</p></div>`;
   modal.classList.add('show');
   const sheet=document.querySelector('#tripModal .trip-sheet');
   if(sheet) sheet.scrollTop=0;
@@ -715,6 +715,36 @@ function getBookingStatusLabel(status){
     }
     ensureToolHistory();
     window.renderToolTransactionHistory();
+  };
+
+  window.exportExpenseData=function(){
+    const arr=readExpenses();
+    if(!arr.length) return alert('No expense data to export yet.');
+    const quote=value=>`"${String(value??'').replace(/"/g,'""')}"`;
+    const rows=[
+      ['Created At','Item','Total VND','Paid By','Type','Split Between','Consumed By','Edited At'],
+      ...arr.map(e=>[
+        e.createdAt||'',
+        e.item||'',
+        Number(e.total||0),
+        labelFor(e.paidBy),
+        e.type==='personal'?'Personal':'Shared',
+        (e.split||[]).map(labelFor).join(' | '),
+        e.consumedBy?labelFor(e.consumedBy):'',
+        e.editedAt||''
+      ])
+    ];
+    const csv='\uFEFF'+rows.map(row=>row.map(quote).join(',')).join('\r\n');
+    const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    const date=new Date().toISOString().slice(0,10);
+    a.href=url;
+    a.download=`CCMV-Saigon-Expenses-${date}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
   };
 
   window.editExpense=function(i){

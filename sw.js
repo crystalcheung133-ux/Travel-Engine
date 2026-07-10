@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ccmv-travel-engine-stage4f-t-frozen-master';
+const CACHE_NAME = 'ccmv-travel-engine-stage4e-3-ui-polish-export';
 const ASSETS = [
   './',
   './index.html',
