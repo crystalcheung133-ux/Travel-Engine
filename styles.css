@@ -308,11 +308,6 @@ a.pill[href*="maps.google"]{background:#fff7eb!important;color:#2b251f!important
 .directory-card strong{color:#7a4528}
 .moment-button{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:11px 14px;border-radius:999px;background:#fff7eb;color:var(--ink);border:1px solid var(--line);font:inherit;font-weight:700;min-width:48px!important;padding-left:14px!important;padding-right:14px!important}
 .modal-intro{font-size:14px!important;line-height:1.5!important;margin:6px 0 14px!important;color:var(--muted)!important}
-.expense-dashboard-v31{display:grid;gap:10px;margin-top:0}
-.expense-dashboard-v31 .expense-total-card{padding:16px!important;border-radius:22px!important}
-.expense-dashboard-v31 .expense-total-card span{font-size:13px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.08em}
-.expense-dashboard-v31 .expense-total-card strong{font-size:24px!important;line-height:1.05;display:block;margin-top:4px}
-.expense-dashboard-v31 .expense-total-card small{color:var(--muted);font-size:12px;display:block;margin-top:4px}
 .expense-focus-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .expense-focus-card{background:#fffaf2;border:1px solid var(--line);border-radius:22px;padding:13px;box-shadow:0 8px 22px rgba(54,39,24,.04)}
 .expense-focus-card h3{margin:0 0 8px;font-size:17px;color:#4a3425}
@@ -329,7 +324,6 @@ a.pill[href*="maps.google"]{background:#fff7eb!important;color:#2b251f!important
 .home-stats-panel strong{font-size:21px!important}
 .home-stats-panel span{font-size:10px!important}
 .expense-focus-grid{grid-template-columns:1fr 1fr;gap:8px}
-.expense-dashboard-v31 .expense-total-card strong{font-size:21px!important}
 .expense-focus-card{padding:10px;border-radius:18px}
 .expense-focus-card h3{font-size:15px;margin-bottom:6px}
 .expense-focus-card p{font-size:12px;line-height:1.22;margin:4px 0}
@@ -374,15 +368,6 @@ a.pill[href*="maps.google"]{background:#fff7eb!important;color:#2b251f!important
 /* Expenses page: latest first + larger summary */
 .expense-latest-top h3{margin:0 0 8px;font-size:18px}
 .expense-latest-top .expense-card{margin:0;padding:11px;border-radius:18px}
-.expense-dashboard-v32{display:grid;gap:12px;margin-bottom:14px}
-.expense-dashboard-v32 .expense-total-card{background:linear-gradient(180deg,#fffaf2,#fff3e4);border:1px solid var(--line);border-radius:28px;padding:20px!important;box-shadow:0 16px 40px rgba(54,39,24,.07)}
-.expense-dashboard-v32 .expense-total-card span{font-size:13px;color:var(--muted);font-weight:900;text-transform:uppercase;letter-spacing:.1em}
-.expense-dashboard-v32 .expense-total-card strong{font-size:clamp(30px,8vw,44px)!important;line-height:1;display:block;margin:6px 0;color:#3a2619}
-.expense-dashboard-v32 .expense-total-card small{font-size:13px;color:var(--muted)}
-.expense-dashboard-v32 .expense-focus-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.expense-dashboard-v32 .expense-focus-card{background:#fffaf2;border:1px solid var(--line);border-radius:24px;padding:16px!important;box-shadow:0 12px 28px rgba(54,39,24,.05)}
-.expense-dashboard-v32 .expense-focus-card h3{font-size:19px!important;margin:0 0 10px;color:#3a2619}
-.expense-dashboard-v32 .expense-focus-card p{font-size:15px!important;line-height:1.32;margin:6px 0!important;font-weight:650}
 .expense-history-block h3{font-size:18px;font-family:Inter,system-ui,sans-serif;margin-top:8px}
 @media(max-width:480px){.home-brand-card.v32-watermark-home{min-height:58vh;padding:34px 14px 28px!important;border-radius:30px}
 .home-single-watermark{width:122vw;opacity:.15;top:45%}
@@ -395,12 +380,7 @@ a.pill[href*="maps.google"]{background:#fff7eb!important;color:#2b251f!important
 .mood-btn{font-size:11px!important;padding:6px 3px!important}
 #momentsText{min-height:58px!important}
 .tools-sheet .latest-transactions{max-height:76px!important}
-.expense-form input,.expense-form select{min-height:32px!important}
-.expense-dashboard-v32 .expense-total-card{padding:16px!important}
-.expense-dashboard-v32 .expense-focus-grid{gap:8px}
-.expense-dashboard-v32 .expense-focus-card{padding:12px!important;border-radius:20px}
-.expense-dashboard-v32 .expense-focus-card h3{font-size:16px!important}
-.expense-dashboard-v32 .expense-focus-card p{font-size:12.5px!important;line-height:1.22}}
+.expense-form input,.expense-form select{min-height:32px!important}}
 /* v3.3 P0 corrections: square home watermark, expense history sort, popup bottom nav, larger friend picker */
 .home-premium.home-v31{min-height:calc(100dvh - 96px)!important;display:flex!important;flex-direction:column!important;justify-content:center!important;gap:14px!important;padding-top:12px;padding-bottom:96px;align-items:center!important;padding:14px 16px 96px!important}
 .home-stats-panel{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:4px;width:min(88vw,520px)!important;margin-inline:auto!important}
@@ -739,8 +719,6 @@ html body.moments-page .btn.primary-action,
 .expense-focus-card,
 .expense-dashboard-v33 .expense-total-card,
 .expense-dashboard-v33 .expense-focus-card,
-.expense-dashboard-v32 .expense-total-card,
-.expense-dashboard-v32 .expense-focus-card,
 .guide-sheet,
 .moments-sheet,
 .tools-sheet,
@@ -765,8 +743,6 @@ html body.moments-page .btn.primary-action,
 .expense-focus-card::after,
 .expense-dashboard-v33 .expense-total-card::after,
 .expense-dashboard-v33 .expense-focus-card::after,
-.expense-dashboard-v32 .expense-total-card::after,
-.expense-dashboard-v32 .expense-focus-card::after,
 .guide-sheet::after,
 .moments-sheet::after,
 .tools-sheet::after,
@@ -1428,19 +1404,11 @@ body.expenses-page .module-hero::after{content:none!important;display:none!impor
 .expense-focus-card::before,
 .expense-focus-card::after,
 .expense-dashboard-v33 .expense-focus-card::before,
-.expense-dashboard-v33 .expense-focus-card::after,
-.expense-dashboard-v32 .expense-focus-card::before,
-.expense-dashboard-v32 .expense-focus-card::after,
-.expense-dashboard-v31 .expense-focus-card::before,
-.expense-dashboard-v31 .expense-focus-card::after{content:none!important;display:none!important;background:none!important;background-image:none!important;opacity:0!important}
+.expense-dashboard-v33 .expense-focus-card::after{content:none!important;display:none!important;background:none!important;background-image:none!important;opacity:0!important}
 .expense-total-card::after,
-.expense-dashboard-v33 .expense-total-card::after,
-.expense-dashboard-v32 .expense-total-card::after,
-.expense-dashboard-v31 .expense-total-card::after{content:""!important;display:block!important;position:absolute!important;width:96px!important;height:96px!important;right:18px!important;bottom:18px!important;inset:auto 18px 18px auto!important;background:url('logo-watermark-monogram.png') center/contain no-repeat!important;opacity:.075!important;mix-blend-mode:multiply!important;pointer-events:none!important;z-index:0!important;transform:none!important}
+.expense-dashboard-v33 .expense-total-card::after{content:""!important;display:block!important;position:absolute!important;width:96px!important;height:96px!important;right:18px!important;bottom:18px!important;inset:auto 18px 18px auto!important;background:url('logo-watermark-monogram.png') center/contain no-repeat!important;opacity:.075!important;mix-blend-mode:multiply!important;pointer-events:none!important;z-index:0!important;transform:none!important}
 .expense-total-card > *,
-.expense-dashboard-v33 .expense-total-card > *,
-.expense-dashboard-v32 .expense-total-card > *,
-.expense-dashboard-v31 .expense-total-card > *{position:relative!important;z-index:1!important}
+.expense-dashboard-v33 .expense-total-card > *{position:relative!important;z-index:1!important}
 /* =========================================================
    Stage 4E-1 — Home / Navigation / Loading Brand Alignment
    Active sources:
