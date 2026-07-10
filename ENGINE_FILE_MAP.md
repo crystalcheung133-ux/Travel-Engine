@@ -32,7 +32,6 @@ This repository is now a compact Travel Engine structure. The app should be upda
 | File | Purpose |
 |---|---|
 | `ccmv-logo-calibrated.png` | Current front/loading logo asset |
-| `splash-logo.png` | Splash/loading logo asset |
 | `logo-monogram-transparent.png` | Transparent monogram logo |
 | `logo-watermark-monogram.png` | Card watermark logo |
 | `icon-192.png`, `icon-512.png` | PWA icons |

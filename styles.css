@@ -93,19 +93,9 @@ h1,h2{font-family:"Cormorant Garamond",serif;line-height:.95;margin:8px 0 14px}
 .latest-transactions{border-top:1px solid var(--line);margin-top:16px;padding-top:14px}
 .latest-transactions h3{margin-top:0}
 .latest-transactions .expense-card{margin:10px 0}
-@media(max-width:760px){body.home-bg::before{opacity:.18!important;background-size:155% auto!important;background-position:center 145px!important}}
-/* v2.1.9 logo wallpaper watermark */
-body::after{content:"";position:fixed;inset:0;background-image:url("logo-watermark-monogram.png");background-repeat:repeat;background-size:150px 150px;opacity:.045;pointer-events:none;z-index:-2}
+/* v2.1.9 card stacking foundation retained; obsolete wallpaper pseudo-elements removed in Stage 4F-F. */
 .dash-card,.prose-block,.trip-card,.timeline-item,.day-summary a,.guide-sheet,.moments-sheet,.unexpected-sheet,.tools-sheet,.trip-sheet{position:relative;overflow:hidden}
-.dash-card::after,.prose-block::after,.trip-card::after,.timeline-item::after,.day-summary a::after,.guide-sheet::after,.moments-sheet::after,.unexpected-sheet::after,.tools-sheet::after,.trip-sheet::after{content:"";position:absolute;inset:0;background-image:url("logo-watermark-monogram.png");background-repeat:repeat;background-size:95px 95px;opacity:.035;pointer-events:none;z-index:0}
 .dash-card > *,.prose-block > *,.trip-card > *,.timeline-item > *,.day-summary a > *,.guide-sheet > *,.moments-sheet > *,.unexpected-sheet > *,.tools-sheet > *,.trip-sheet > *{position:relative;z-index:1}
-@media(max-width:760px){body::after{background-size:120px 120px;opacity:.05}
-.dash-card::after,.prose-block::after,.trip-card::after,.timeline-item::after,.day-summary a::after,.guide-sheet::after,.moments-sheet::after,.unexpected-sheet::after,.tools-sheet::after,.trip-sheet::after{background-size:82px 82px;opacity:.04}}
-/* v2.1.11 stable rollback/fix */
-body::after,
-.dash-card::after,.prose-block::after,.trip-card::after,.timeline-item::after,.day-summary a::after,
-.guide-sheet::after,.moments-sheet::after,.unexpected-sheet::after,.tools-sheet::after,.trip-sheet::after{display:none!important;content:none!important}
-body.home-bg::before{content:"";position:fixed;inset:0;background:url("logo-watermark-monogram.png") center 120px/70% auto no-repeat;opacity:.10!important;pointer-events:none;z-index:-1;background-size:120% auto!important;background-position:center 115px!important;display:none!important}
 .dash-card,.prose-block,.trip-card,.timeline-item,.day-summary a,
 .guide-sheet,.moments-sheet,.unexpected-sheet,.tools-sheet,.trip-sheet{background-color:var(--card)!important;background-image:linear-gradient(rgba(255,253,248,.94), rgba(255,253,248,.94)),
     url("logo-watermark-monogram.png")!important;background-repeat:repeat!important;background-size:auto, 92px 92px!important;background-position:center center!important;position:relative!important;overflow:hidden!important}

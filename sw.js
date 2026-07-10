@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ccmv-travel-engine-stage4f-d1-build-marker';
+const CACHE_NAME = 'ccmv-travel-engine-stage4f-f-disabled-wallpaper-cleanup';
 const ASSETS = [
   './',
   './index.html',
@@ -13,7 +13,6 @@ const ASSETS = [
   './icon-512.png',
   './logo-watermark-monogram.png',
   './logo-monogram-transparent.png',
-  './splash-logo.png',
   './ccmv-logo-calibrated.png',
   './guide.html',
   './itinerary.html',
