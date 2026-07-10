@@ -173,7 +173,7 @@ function openTripCard(key) {
   const content = document.getElementById('tripModalContent');
   const modal = document.getElementById('tripModal');
   if (!content || !modal) return;
-  content.innerHTML = `<div class="trip-onepage"><p class="kicker">Trip</p><h2>${t.title}</h2>${t.body}<div class="guide-next-row"><button class="pill" onclick="openTripCard('${prev}')">‹ Previous</button><button class="pill" onclick="openTripCard('${next}')">Next ›</button></div><p class="timestamp">Build · Stage 4E-3 · UI POLISH</p></div>`;
+  content.innerHTML = `<div class="trip-onepage"><p class="kicker">Trip</p><h2>${t.title}</h2>${t.body}<div class="guide-next-row"><button class="pill" onclick="openTripCard('${prev}')">‹ Previous</button><button class="pill" onclick="openTripCard('${next}')">Next ›</button></div><p class="timestamp">Build · Stage 4E-4 · BRAND + EXPORT</p></div>`;
   modal.classList.add('show');
   const sheet=document.querySelector('#tripModal .trip-sheet');
   if(sheet) sheet.scrollTop=0;
@@ -721,7 +721,44 @@ function getBookingStatusLabel(status){
     const arr=readExpenses();
     if(!arr.length) return alert('No expense data to export yet.');
     const quote=value=>`"${String(value??'').replace(/"/g,'""')}"`;
+    const total=arr.reduce((sum,e)=>sum+Number(e.total||0),0);
+    const personalSpend={christal:0,crystal:0,mero:0,vivian:0};
+    const balance={christal:0,crystal:0,mero:0,vivian:0};
+    arr.forEach(e=>{
+      const amount=Number(e.total||0);
+      if(!(e.paidBy in balance)) balance[e.paidBy]=0;
+      balance[e.paidBy]+=amount;
+      if(e.type==='personal'){
+        const consumer=e.consumedBy || ((e.split||[])[0]) || e.paidBy;
+        if(!(consumer in personalSpend)) personalSpend[consumer]=0;
+        if(!(consumer in balance)) balance[consumer]=0;
+        personalSpend[consumer]+=amount;
+        balance[consumer]-=amount;
+      }else{
+        const split=(e.split&&e.split.length)?e.split:[e.paidBy];
+        const share=amount/split.length;
+        split.forEach(k=>{
+          if(!(k in personalSpend)) personalSpend[k]=0;
+          if(!(k in balance)) balance[k]=0;
+          personalSpend[k]+=share;
+          balance[k]-=share;
+        });
+      }
+    });
     const rows=[
+      ['CCMV SAIGON EXPENSE SUMMARY'],
+      ['Trip Total VND',Math.round(total)],
+      [],
+      ['Personal Spend','Amount VND'],
+      ...FRIEND_ORDER.map(k=>[labelFor(k),Math.round(personalSpend[k]||0)]),
+      [],
+      ['Settlement','Position','Amount VND'],
+      ...FRIEND_ORDER.map(k=>{
+        const v=balance[k]||0;
+        return [labelFor(k),v>=0?'Receive':'Owes',Math.abs(Math.round(v))];
+      }),
+      [],
+      ['TRANSACTION HISTORY'],
       ['Created At','Item','Total VND','Paid By','Type','Split Between','Consumed By','Edited At'],
       ...arr.map(e=>[
         e.createdAt||'',

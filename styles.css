@@ -1365,3 +1365,80 @@ body.home-bg section.home-brand-card.v37-dashboard-home{transform:none!important
     grid-column:1 / -1!important;
   }
 }
+
+
+/* =========================================================
+   Stage 4E-4 — Brand mark consistency, editorial hero, splash colour
+   Active visual source: this block.
+   ========================================================= */
+/* One printed-monogram treatment across Home, Moments and Expenses.
+   The watermark asset has a white canvas; multiply blending makes that canvas
+   disappear into the warm navigation paper instead of reading as a square tile. */
+.site-nav .brand-mark{
+  width:58px!important;
+  height:46px!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  overflow:hidden!important;
+  flex:0 0 58px!important;
+}
+.site-nav .brand-mark img,
+body.home-bg nav.site-nav .brand-mark img{
+  width:58px!important;
+  height:46px!important;
+  object-fit:cover!important;
+  object-position:center 52%!important;
+  transform:scale(1.34)!important;
+  transform-origin:center!important;
+  background:transparent!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  mix-blend-mode:multiply!important;
+  opacity:.70!important;
+  filter:saturate(.90) contrast(1.06)!important;
+}
+@media(max-width:520px){
+  .site-nav .brand-mark{width:50px!important;height:42px!important;flex-basis:50px!important}
+  .site-nav .brand-mark img,
+  body.home-bg nav.site-nav .brand-mark img{width:50px!important;height:42px!important;transform:scale(1.40)!important;opacity:.68!important}
+}
+
+/* Higher-end editorial highlight: no full pink rectangle behind the title.
+   Only “Companion” sits over a restrained champagne-blush brush trace. */
+.home-brand-card.v37-dashboard-home h1{
+  position:relative!important;
+  background:none!important;
+  padding:0 .10em .08em!important;
+  isolation:isolate!important;
+}
+.home-brand-card.v37-dashboard-home h1 em{
+  position:relative!important;
+  display:inline-block!important;
+  z-index:0!important;
+}
+.home-brand-card.v37-dashboard-home h1 em::after{
+  content:"";
+  position:absolute;
+  left:-.08em;
+  right:-.10em;
+  bottom:.06em;
+  height:.34em;
+  z-index:-1;
+  border-radius:48% 42% 45% 40% / 58% 44% 54% 42%;
+  transform:rotate(-1.2deg) skewX(-4deg);
+  background:
+    radial-gradient(ellipse at 12% 48%,rgba(255,250,245,.62) 0 7%,transparent 9%),
+    radial-gradient(ellipse at 88% 55%,rgba(255,250,245,.48) 0 6%,transparent 8%),
+    linear-gradient(92deg,rgba(202,151,145,.18),rgba(191,136,132,.34) 22%,rgba(205,157,147,.28) 72%,rgba(217,177,159,.12));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.32);
+}
+
+/* Lock slogan and destination to exactly the same warm muted gold. */
+#ccmvSplash .splash-line,
+#ccmvSplash .splash-destination{
+  color:#9b7443!important;
+  -webkit-text-fill-color:#9b7443!important;
+  text-shadow:none!important;
+}

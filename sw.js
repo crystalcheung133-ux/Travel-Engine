@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ccmv-travel-engine-stage4e-3-ui-polish-export';
+const CACHE_NAME = 'ccmv-travel-engine-stage4e-4-brand-export-summary';
 const ASSETS = [
   './',
   './index.html',
