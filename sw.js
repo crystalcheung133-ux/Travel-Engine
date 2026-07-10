@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ccmv-travel-engine-stage4e21-regression-fix';
+const CACHE_NAME = 'ccmv-travel-engine-stage4f-b-merged-css-cleanup';
 const ASSETS = [
   './',
   './index.html',
