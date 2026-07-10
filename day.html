@@ -38,6 +38,23 @@
   }).join('');
   root.innerHTML = `<div class="page-hero"><p class="kicker">${esc(data.kicker)}</p><h1>${esc(data.heading)}</h1><div class="time-legend">${legend}</div></div><section class="timeline">${items}</section>`;
 
+  // Stage 4F-L: native hash scrolling can run before dynamic cards exist.
+  // Re-resolve the requested card after render and offset the sticky top bar.
+  function scrollToRequestedCard(){
+    if(!location.hash) return;
+    let targetId;
+    try{ targetId = decodeURIComponent(location.hash.slice(1)); }
+    catch(e){ targetId = location.hash.slice(1); }
+    const target = document.getElementById(targetId);
+    if(!target) return;
+    const nav = document.querySelector('.site-nav');
+    const navOffset = (nav ? nav.getBoundingClientRect().height : 0) + 12;
+    const top = target.getBoundingClientRect().top + window.scrollY - navOffset;
+    window.scrollTo({top:Math.max(0, top), behavior:'auto'});
+  }
+  requestAnimationFrame(()=>requestAnimationFrame(scrollToRequestedCard));
+  window.addEventListener('hashchange', scrollToRequestedCard);
+
   // Stage 4E-1: restore swipe between dynamic day pages.
   let touchStartX = 0;
   let touchStartY = 0;

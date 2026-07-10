@@ -1176,7 +1176,7 @@ h1,h2,.home-brand-card h1,.page-hero h1,.section-head h1,.module-hero h1{font-fa
 .live-card em{display:block!important;font-size:13px!important;font-style:normal!important;color:var(--muted)!important;margin-top:5px!important}
 .home-day-button{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:46px!important;padding:12px 18px!important;text-decoration:none!important}
 /* Remove repeated decorative watermark systems; keep only the single subtle home mark above. */
-.cardmark::after,.quick-info-card::after,.guide-modal .quick-info-card::after,
+.quick-info-card::after,.guide-modal .quick-info-card::after,
 .page-hero::after,.section-head::after,.module-hero::after,.trip-sheet::after,
 .timeline-item::after,.dash-card::after,.prose-block::after,.trip-card::after,
 .expense-card::after,.moments-entry::after{display:none!important;content:none!important}
