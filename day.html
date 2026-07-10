@@ -21,6 +21,15 @@
     const detailHtml = (item.details || []).map(text => `<p>${esc(text)}</p>`).join('');
     const routeHtml = item.route ? `<div class="route-hint"><strong>🚕 To next stop</strong><br/>${esc(item.route)}</div>` : '';
     const mapHtml = item.map ? `<a href="${esc(item.map)}" target="_blank">Map</a>` : '';
+    const guideIds = Array.isArray(item.guideIds) && item.guideIds.length ? item.guideIds : [item.placeId || item.id];
+    const directoryHtml = item.showShoppingDirectory
+      ? `<button onclick="location.href='guide.html#shopping-directory'">Shopping List</button>`
+      : '';
+    const guideHtml = guideIds.map(key => {
+      const place = (typeof PLACES !== 'undefined' && PLACES[key]) || {};
+      const label = place.title ? `${place.title} Guide` : 'Guide';
+      return `<button onclick="location.href='place.html?id=${esc(key)}'">${esc(label)}</button>`;
+    }).join('');
     return `
     <div class="timeline-item" id="${esc(item.id)}">
       <div class="timeline-time">${esc(item.time)}</div>
@@ -29,7 +38,7 @@
         ${detailHtml}
         ${routeHtml}
         <div class="timeline-actions">
-          <button onclick="location.href='place.html?id=${esc(item.id)}'">Guide</button>
+          ${directoryHtml}${guideHtml}
           ${mapHtml}
           <button onclick="openMomentsModal('${esc(item.id)}')">Moment</button>
         </div>
