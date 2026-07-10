@@ -527,23 +527,17 @@ body:has(.page-action-row[data-v35="moment-action"]) .module-hero .kicker{color:
 body:has(.page-action-row[data-v35="moment-action"]) .primary-action,
 .moments-sheet .btn{background:#b76c78!important;color:#fffaf7!important;border-color:#b76c78!important}
 body:has(.page-action-row[data-v35="expense-action"]) .page-hero,
-body:has(.page-action-row[data-v35="expense-action"]) .module-hero{background:linear-gradient(180deg,#f2f9f4,#e7f2ea)!important;border-color:rgba(100,139,113,.30)!important}
 body:has(.page-action-row[data-v35="expense-action"]) .page-hero .kicker,
 body:has(.page-action-row[data-v35="expense-action"]) .module-hero .kicker{color:#527a5d!important}
 body:has(.page-action-row[data-v35="expense-action"]) .primary-action,
 .tools-sheet .btn{background:#678f72!important;color:#fffaf7!important;border-color:#678f72!important}
 /* Swipe affordance for day pages */
-body.moments-page .page-hero, body.moments-page .module-hero{background:linear-gradient(180deg,#fff4f6,#fdebef)!important;border-color:rgba(202,117,132,.28)!important}
 body.moments-page .page-hero .kicker, body.moments-page .module-hero .kicker{color:#9a5361!important}
 body.moments-page .primary-action{background:#b76c78!important;color:#fffaf7!important;border-color:#b76c78!important}
-body.expenses-page .page-hero, body.expenses-page .module-hero{background:linear-gradient(180deg,#f2f9f4,#e7f2ea)!important;border-color:rgba(100,139,113,.30)!important}
 body.expenses-page .page-hero .kicker, body.expenses-page .module-hero .kicker{color:#527a5d!important}
 body.expenses-page .primary-action{background:#678f72!important;color:#fffaf7!important;border-color:#678f72!important}
 /* v3.9.4 hotfix: restore guide modal scrolling, force Moments pink theme */
 .guide-modal .guide-sheet{overflow-y:auto!important;overflow-x:hidden!important;-webkit-overflow-scrolling:touch!important;max-height:calc(100dvh - 20px)!important}
-html body.moments-page main .page-hero.module-hero,
-html body.moments-page .page-hero,
-html body.moments-page .module-hero{background:linear-gradient(180deg,#fff4f6,#fdebef)!important;border-color:rgba(202,117,132,.36)!important}
 html body.moments-page .page-hero .kicker,
 html body.moments-page .module-hero .kicker{color:#9a5361!important}
 html body.moments-page .primary-action,
@@ -655,8 +649,6 @@ html body.moments-page .btn.primary-action,
 .moments-close,
 .tools-close{position:absolute!important;top:16px!important;right:16px!important;left:auto!important;bottom:auto!important;z-index:9999!important;pointer-events:auto!important;display:flex!important;align-items:center!important;justify-content:center!important;width:44px!important;height:44px!important;border-radius:999px!important;background:#fffaf2!important;border:1px solid var(--line)!important;color:var(--ink)!important;line-height:1!important}
 /* Strong explicit Moments pink theme: no :has dependency, no Expenses green bleed */
-body.moments-page .page-hero,
-body.moments-page .page-hero.module-hero{background:linear-gradient(180deg,#f6d6cc,#fffaf2)!important;border-color:var(--moments-pink-border)!important}
 body.moments-page .page-hero .kicker,
 body.moments-page .page-hero h1{color:var(--moments-pink-ink)!important}
 body.moments-page .primary-action,
@@ -760,26 +752,6 @@ body.moments-page .moments-sheet button.btn{background:linear-gradient(180deg,#f
 .trip-close,
 .moments-close,
 .tools-close{position:absolute!important;top:14px!important;right:14px!important;left:auto!important;bottom:auto!important;z-index:100000!important;display:flex!important;align-items:center!important;justify-content:center!important;width:44px!important;height:44px!important;float:none!important;border-radius:999px!important;pointer-events:auto!important;background:#fffaf2!important;color:#2b251f!important;border:1px solid #d8c5b1!important;box-shadow:0 8px 24px rgba(43,37,31,.14)!important}
-/* 2) Moments page must stay pink; no Expenses green bleed. */
-html body.moments-page .page-hero,
-html body.moments-page .module-hero,
-html body.moments-page main .page-hero.module-hero{background:linear-gradient(180deg,#fdecef 0%,#f7d5dc 100%)!important;border-color:rgba(183,88,105,.38)!important;box-shadow:0 14px 45px rgba(183,88,105,.12)!important}
-html body.moments-page .page-hero .kicker,
-html body.moments-page .module-hero .kicker{color:#9a5361!important}
-html body.moments-page .page-hero h1,
-html body.moments-page .module-hero h1{color:#2b251f!important}
-html body.moments-page .page-hero .lead,
-html body.moments-page .module-hero .lead{color:#5a403f!important}
-html body.moments-page .primary-action,
-html body.moments-page .btn.primary-action,
-html body.moments-page .page-action-row .primary-action{background:linear-gradient(180deg,#fff1f3 0%,#f4bdc8 100%)!important;border-color:rgba(183,88,105,.42)!important;color:#3b201f!important}
-/* Expenses remains sage green. */
-html body.expenses-page .page-hero,
-html body.expenses-page .module-hero,
-html body.expenses-page main .page-hero.module-hero{background:linear-gradient(180deg,#eef8ea 0%,#d6e8d3 100%)!important;border-color:rgba(111,143,107,.36)!important}
-html body.expenses-page .primary-action,
-html body.expenses-page .btn.primary-action,
-html body.expenses-page .page-action-row .primary-action{background:linear-gradient(180deg,#eef8ea 0%,#cfe3ca 100%)!important;border-color:rgba(111,143,107,.44)!important;color:#233c2d!important}
 /* 3) Use clean monogram-only watermark,
 .prose-block::after,
 .trip-card::after,
@@ -1103,7 +1075,6 @@ body.expenses-page .page-hero::after,body.expenses-page .module-hero::after,
 /* Front page top nav: clear, complete logo like Planner header; not a tiny app icon. */
 .home-bg .site-nav{background:#f7efe4!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;border-bottom:1px solid rgba(214,194,174,.78)!important;padding:12px 16px!important}
 .home-bg .site-nav .brand{gap:13px!important;font-weight:950!important;color:var(--ccmv-ink-deep)!important;letter-spacing:-.01em!important}
-.home-bg .site-nav .brand img{width:58px!important;height:58px!important;border-radius:0!important;object-fit:contain!important;box-shadow:none!important;filter:drop-shadow(0 8px 14px rgba(76,52,34,.09))!important}
 /* Front hero: restore the uploaded Saigon Companion look — strong editorial serif + italic Companion. */
 .home-brand-card.v37-dashboard-home{min-height:auto!important;aspect-ratio:auto!important;display:flex;flex-direction:column;align-items:center!important;justify-content:center;text-align:center!important;position:relative;overflow:hidden!important;background:linear-gradient(180deg,rgba(255,253,248,.96),rgba(255,247,238,.92))!important;box-shadow:0 18px 60px rgba(54,39,24,.12)!important;border-color:rgba(214,194,174,.72)!important}
 .home-brand-card.v37-dashboard-home::before{content:""!important;display:block!important;width:96px!important;height:96px!important;margin:0 auto 12px!important;background:url('ccmv-logo-calibrated.png') center/contain no-repeat!important;border-radius:0!important;box-shadow:none!important;position:relative!important;z-index:2!important;filter:drop-shadow(0 10px 18px rgba(76,52,34,.10))!important}
@@ -1111,8 +1082,7 @@ body.expenses-page .page-hero::after,body.expenses-page .module-hero::after,
 .home-brand-card.v37-dashboard-home h1{font-family:'Baskerville','Iowan Old Style','Palatino Linotype','Book Antiqua',Georgia,serif!important;font-size:clamp(58px,13vw,92px)!important;line-height:.92!important;letter-spacing:-.045em!important;font-weight:900!important;text-align:center!important;margin-left:auto!important;margin-right:auto!important;color:#2a211c!important;text-shadow:0 2px 0 rgba(255,255,255,.48),0 14px 28px rgba(68,43,28,.12)!important;margin:0 0 24px!important;width:fit-content!important;padding:0 .16em .08em!important;background:linear-gradient(177deg,transparent 16%,rgba(244,205,211,.28) 17%,rgba(232,163,176,.48) 45%,rgba(246,211,216,.34) 78%,transparent 79%)!important}
 .home-brand-card.v37-dashboard-home h1 em{font-family:inherit!important;font-style:italic!important;font-weight:900!important;color:#2a211c!important}
 .home-brand-card.v37-dashboard-home .home-tagline{letter-spacing:.20em!important;font-weight:900!important;color:#625249!important;font-size:14px!important;text-transform:uppercase!important}
-@media(max-width:520px){.home-bg .site-nav .brand img{width:54px!important;height:54px!important}
-.home-brand-card.v37-dashboard-home::before{width:86px!important;height:86px!important;margin-bottom:10px!important}
+@media(max-width:520px){.home-brand-card.v37-dashboard-home::before{width:86px!important;height:86px!important;margin-bottom:10px!important}
 .home-brand-card.v37-dashboard-home h1{font-size:clamp(58px,15vw,72px)!important;line-height:.90!important;margin-bottom:18px!important;padding-left:.10em!important;padding-right:.10em!important}
 .home-brand-card.v37-dashboard-home .home-tagline{font-size:12px!important;letter-spacing:.18em!important}}
 /* Bottom menu popups: fully opaque premium surface, so page underneath never shows through. */
@@ -1130,7 +1100,6 @@ body.expenses-page .page-hero::after,body.expenses-page .module-hero::after,
 body.home-bg section.home-brand-card.v37-dashboard-home::before,
 body.home-bg section.home-brand-card.v37-dashboard-home::after{content:none!important;display:none!important;background:none!important;background-image:none!important;width:0!important;height:0!important;margin:0!important;padding:0!important;border:0!important;box-shadow:none!important;filter:none!important}
 /* Header logo remains visible. */
-body.home-bg nav.site-nav a.brand img{display:block!important}
 /* 1143h: source surface cleanup — cards made opaque; no new visual override block. */
 /* ===== 1143i TRUE OPAQUE SURFACES =====
    Fix remaining see-through cards on Trip / Guide / Moments / Expenses.
@@ -1250,8 +1219,6 @@ body.home-bg{background-image:radial-gradient(circle at 50% 10%,rgba(255,255,255
 body::before,
 body::after{display:none!important;content:none!important;background-image:none!important}
 /* Header logo: no pasted square photo, more like a monogram printed on the surface. */
-.site-nav .brand img{object-fit:contain!important;background:transparent!important;box-shadow:none!important;border-radius:0!important;mix-blend-mode:multiply!important}
-@media(max-width:520px){.site-nav .brand img{width:52px!important;height:52px!important}
 .site-nav .brand{font-size:22px!important;font-weight:900!important}}
 /* Home should feel closer to Planner, but more alive: less dead air, more usable card space. */
 body.home-bg .site-nav{min-height:66px!important;box-sizing:border-box!important}
@@ -1288,13 +1255,9 @@ body.home-bg .live-card{min-height:78px!important}}
    ========================================================= */
 /* Header logo: use the transparent monogram mark so it reads as printed,
    not as a pasted square photo. Keep Companion's warmer identity. */
-.site-nav .brand img,
-body.home-bg nav.site-nav a.brand img{width:58px!important;height:46px!important;object-fit:contain!important;object-position:center!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;mix-blend-mode:multiply!important;opacity:.72!important;filter:saturate(.95) contrast(.95) drop-shadow(0 2px 3px rgba(91,66,38,.05))!important}
 .site-nav .brand{gap:12px!important}
 .site-nav .brand-mark{display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 auto!important}
 .site-nav .brand-mark img{display:block!important}
-@media(max-width:520px){.site-nav .brand img,
-  body.home-bg nav.site-nav a.brand img{width:58px!important;height:46px!important}
 .site-nav .brand{font-size:21px!important}}
 /* Home front page: keep card content size, but reduce the dead air above and below. */
 body.home-bg main.dashboard.home-premium.home-v37{height:calc(100dvh - 66px)!important;min-height:0!important;max-height:calc(100dvh - 66px)!important;box-sizing:border-box!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:0 12px calc(72px + env(safe-area-inset-bottom))!important;margin:0 auto!important;overflow:hidden!important}
@@ -1391,8 +1354,7 @@ body.home-bg section.home-brand-card.v37-dashboard-home{transform:none!important
   overflow:hidden!important;
   flex:0 0 58px!important;
 }
-.site-nav .brand-mark img,
-body.home-bg nav.site-nav .brand-mark img{
+.site-nav .brand-mark img{
   width:58px!important;
   height:46px!important;
   object-fit:cover!important;
@@ -1409,8 +1371,7 @@ body.home-bg nav.site-nav .brand-mark img{
 }
 @media(max-width:520px){
   .site-nav .brand-mark{width:50px!important;height:42px!important;flex-basis:50px!important}
-  .site-nav .brand-mark img,
-  body.home-bg nav.site-nav .brand-mark img{width:50px!important;height:42px!important;transform:scale(1.40)!important;opacity:.68!important}
+  .site-nav .brand-mark img{width:50px!important;height:42px!important;transform:scale(1.40)!important;opacity:.68!important}
 }
 
 /* Higher-end editorial highlight: no full pink rectangle behind the title.

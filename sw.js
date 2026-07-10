@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ccmv-travel-engine-stage4e-5-header-hero-unification';
+const CACHE_NAME = 'ccmv-travel-engine-stage4e-6-active-source-correction';
 const ASSETS = [
   './',
   './index.html',
