@@ -1101,7 +1101,7 @@ body.expenses-page .page-hero::after,body.expenses-page .module-hero::after,
 /* Front page top nav: clear, complete logo like Planner header; not a tiny app icon. */
 .home-bg .site-nav{background:#f7efe4!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;border-bottom:1px solid rgba(214,194,174,.78)!important;padding:12px 16px!important}
 .home-bg .site-nav .brand{gap:13px!important;font-weight:950!important;color:var(--ccmv-ink-deep)!important;letter-spacing:-.01em!important}
-.home-bg .site-nav .brand img{content:url('ccmv-logo-calibrated.png')!important;width:58px!important;height:58px!important;border-radius:0!important;object-fit:contain!important;box-shadow:none!important;filter:drop-shadow(0 8px 14px rgba(76,52,34,.09))!important}
+.home-bg .site-nav .brand img{width:58px!important;height:58px!important;border-radius:0!important;object-fit:contain!important;box-shadow:none!important;filter:drop-shadow(0 8px 14px rgba(76,52,34,.09))!important}
 /* Front hero: restore the uploaded Saigon Companion look — strong editorial serif + italic Companion. */
 .home-brand-card.v37-dashboard-home{min-height:auto!important;aspect-ratio:auto!important;display:flex;flex-direction:column;align-items:center!important;justify-content:center;text-align:center!important;position:relative;overflow:hidden!important;background:linear-gradient(180deg,rgba(255,253,248,.96),rgba(255,247,238,.92))!important;box-shadow:0 18px 60px rgba(54,39,24,.12)!important;border-color:rgba(214,194,174,.72)!important}
 .home-brand-card.v37-dashboard-home::before{content:""!important;display:block!important;width:96px!important;height:96px!important;margin:0 auto 12px!important;background:url('ccmv-logo-calibrated.png') center/contain no-repeat!important;border-radius:0!important;box-shadow:none!important;position:relative!important;z-index:2!important;filter:drop-shadow(0 10px 18px rgba(76,52,34,.10))!important}
@@ -1128,7 +1128,7 @@ body.expenses-page .page-hero::after,body.expenses-page .module-hero::after,
 body.home-bg section.home-brand-card.v37-dashboard-home::before,
 body.home-bg section.home-brand-card.v37-dashboard-home::after{content:none!important;display:none!important;background:none!important;background-image:none!important;width:0!important;height:0!important;margin:0!important;padding:0!important;border:0!important;box-shadow:none!important;filter:none!important}
 /* Header logo remains visible. */
-body.home-bg nav.site-nav a.brand img{content:url('ccmv-logo-calibrated.png')!important;display:block!important}
+body.home-bg nav.site-nav a.brand img{display:block!important}
 /* 1143h: source surface cleanup — cards made opaque; no new visual override block. */
 /* ===== 1143i TRUE OPAQUE SURFACES =====
    Fix remaining see-through cards on Trip / Guide / Moments / Expenses.
@@ -1279,7 +1279,7 @@ body.home-bg .live-card{min-height:78px!important}}
 /* Header logo: use the transparent monogram mark so it reads as printed,
    not as a pasted square photo. Keep Companion's warmer identity. */
 .site-nav .brand img,
-body.home-bg nav.site-nav a.brand img{content:url('logo-watermark-monogram.png')!important;width:58px!important;height:46px!important;object-fit:contain!important;object-position:center!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;mix-blend-mode:multiply!important;opacity:.72!important;filter:saturate(.95) contrast(.95) drop-shadow(0 2px 3px rgba(91,66,38,.05))!important}
+body.home-bg nav.site-nav a.brand img{width:58px!important;height:46px!important;object-fit:contain!important;object-position:center!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;mix-blend-mode:multiply!important;opacity:.72!important;filter:saturate(.95) contrast(.95) drop-shadow(0 2px 3px rgba(91,66,38,.05))!important}
 .site-nav .brand{gap:12px!important}
 @media(max-width:520px){.site-nav .brand img,
   body.home-bg nav.site-nav a.brand img{width:58px!important;height:46px!important}

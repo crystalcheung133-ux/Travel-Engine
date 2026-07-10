@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ccmv-travel-engine-stage4f-s2-malformed-comment-repair';
+const CACHE_NAME = 'ccmv-travel-engine-stage4f-s3-header-logo-single-source';
 const ASSETS = [
   './',
   './index.html',
