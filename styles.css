@@ -1161,11 +1161,19 @@ body.home-bg nav.site-nav a.brand img{display:block!important}
 .fact-grid > div,
 .check-row,
 .ready-box{background-color:#fffaf2!important;background-image:none!important;opacity:1!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;mix-blend-mode:normal!important;isolation:isolate!important}
-/* Keep Moments/Expenses hero page colour, but make it fully solid rather than glassy. */
+/* Moments / Expenses hero surfaces: opaque editorial gradients, not glass and not solid blocks. */
 body.moments-page .page-hero,
-body.moments-page .module-hero{background:#f8dfe3!important;background-image:none!important;opacity:1!important}
+body.moments-page .module-hero{
+  background:linear-gradient(180deg,#fff4f6 0%,#f7d7df 100%)!important;
+  background-image:linear-gradient(180deg,#fff4f6 0%,#f7d7df 100%)!important;
+  opacity:1!important
+}
 body.expenses-page .page-hero,
-body.expenses-page .module-hero{background:#eef4e8!important;background-image:none!important;opacity:1!important}
+body.expenses-page .module-hero{
+  background:linear-gradient(180deg,#f3f9f1 0%,#dcebd8 100%)!important;
+  background-image:linear-gradient(180deg,#f3f9f1 0%,#dcebd8 100%)!important;
+  opacity:1!important
+}
 /* Remove decorative pseudo layers that made opaque cards still look see-through / dirty. */
 .trip-card::before,.trip-card::after,
 .prose-block::before,.prose-block::after,
@@ -1368,7 +1376,7 @@ body.home-bg section.home-brand-card.v37-dashboard-home{transform:none!important
 
 
 /* =========================================================
-   Stage 4E-4 — Brand mark consistency, editorial hero, splash colour
+   Stage 4E-5 — Unified header mark + restored hero gradients
    Active visual source: this block.
    ========================================================= */
 /* One printed-monogram treatment across Home, Moments and Expenses.

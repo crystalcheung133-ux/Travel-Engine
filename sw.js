@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ccmv-travel-engine-stage4e-4-brand-export-summary';
+const CACHE_NAME = 'ccmv-travel-engine-stage4e-5-header-hero-unification';
 const ASSETS = [
   './',
   './index.html',
