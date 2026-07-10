@@ -268,23 +268,8 @@ a.pill[href*="maps.google"]{background:#fff7eb!important;color:#2b251f!important
 .mood-btn{font-size:11px!important;padding:6px 3px!important}
 #momentsText{min-height:58px!important}
 .expense-form input,.expense-form select{min-height:32px!important}}
-/* v3.3 P0 corrections: square home watermark, expense history sort, popup bottom nav{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:4px;width:min(88vw,520px)!important;margin-inline:auto!important}
-@media(max-width:480px){}
-.app-nav button.trip-trigger,
-.app-nav button.guide-trigger,
-.app-nav button.days-trigger{border:0!important;background:transparent!important;color:inherit!important;font:inherit!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:2px!important;min-width:0!important;padding:6px 2px!important;cursor:pointer!important}
-.app-nav button span{font-size:20px;line-height:1}
-.app-nav button small{font-size:10px;font-weight:750;color:var(--muted)}
-/* Expenses: page summary first{border:1px solid var(--line);background:#fff7ed;border-radius:24px;padding:14px;margin:0 0 12px;box-shadow:0 12px 32px rgba(54,39,24,.06);display:none!important}
-.expense-dashboard-v33 .expense-total-card span{font-size:13px;color:var(--muted);font-weight:900;text-transform:uppercase;letter-spacing:.1em;display:block}
-.expense-dashboard-v33 .expense-total-card small{font-size:13px;color:var(--muted)}
-.expense-dashboard-v33 .expense-focus-card h3{font-size:19px!important;margin:0 0 10px;color:#3a2619}
-.expense-dashboard-v33 .expense-focus-card p{font-size:15px!important;line-height:1.32;margin:6px 0!important;font-weight:650}
-@media(max-width:480px){.expense-dashboard-v33 .expense-total-card{padding:16px!important}
-.expense-dashboard-v33 .expense-focus-grid{gap:8px}
-.expense-dashboard-v33 .expense-focus-card{padding:12px!important;border-radius:20px}
-.expense-dashboard-v33 .expense-focus-card h3{font-size:16px!important}
-.expense-dashboard-v33 .expense-focus-card p{font-size:12.5px!important;line-height:1.22}}/* Expense tool: no separate Latest Transactions block; intro remains visible */
+/* Stage 4F-S2: removed malformed historical comment block; all swallowed nav and Expenses rules were superseded by later canonical rules. */
+/* Expense tool: no separate Latest Transactions block; intro remains visible */
 .tools-sheet .modal-intro,
 .expense-page-shell .page-hero .lead{display:block!important}
 /* Friend picker: larger, easier iOS-action-sheet feel */

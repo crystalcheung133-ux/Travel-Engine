@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ccmv-travel-engine-stage4f-s1f-day-action-layout';
+const CACHE_NAME = 'ccmv-travel-engine-stage4f-s2-malformed-comment-repair';
 const ASSETS = [
   './',
   './index.html',
