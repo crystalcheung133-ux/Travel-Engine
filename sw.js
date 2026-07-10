@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ccmv-travel-engine-stage4f-q-expenses-single-module';
+const CACHE_NAME = 'ccmv-travel-engine-stage4f-r-runtime-chain-consolidation';
 const ASSETS = [
   './',
   './index.html',

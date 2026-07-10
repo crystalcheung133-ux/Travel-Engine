@@ -30,12 +30,37 @@ function goPlace(key){
 
 function $(id){return document.getElementById(id);}
 function closeMiniMenus(){document.querySelectorAll('.mini-menu').forEach(m=>m.classList.remove('show'));}
-function toggleMenu(id){const m=$(id);const open=m&&m.classList.contains('show');closeMiniMenus();if(m&&!open)m.classList.add('show');}
-function toggleTripMenu(){toggleMenu('tripMenu')} function toggleGuideMenu(){toggleMenu('guideMenu')} function toggleDays(){toggleMenu('daysMenu')}
+function clampMenuPosition(n,min,max){return Math.max(min,Math.min(max,n));}
+function positionMiniMenu(menu,trigger){
+  if(!menu||!trigger)return;
+  const rect=trigger.getBoundingClientRect();
+  const menuWidth=Math.min(230,window.innerWidth-24);
+  const center=rect.left+rect.width/2;
+  const left=clampMenuPosition(center,12+menuWidth/2,window.innerWidth-12-menuWidth/2);
+  menu.style.left=left+'px';
+  menu.style.right='auto';
+  menu.style.width=menuWidth+'px';
+}
+function toggleMenu(id,trigger){
+  const m=$(id);
+  const open=m&&m.classList.contains('show');
+  closeMiniMenus();
+  if(m&&!open){positionMiniMenu(m,trigger||document.activeElement);m.classList.add('show');}
+}
+function toggleTripMenu(){toggleMenu('tripMenu',document.querySelector('.trip-trigger'));}
+function toggleGuideMenu(){toggleMenu('guideMenu',document.querySelector('.guide-trigger'));}
+function toggleDays(){toggleMenu('daysMenu',document.querySelector('.days-trigger'));}
+window.addEventListener('resize',closeMiniMenus);
 document.addEventListener('click',e=>{if(!e.target.closest('.mini-menu')&&!e.target.closest('.trip-trigger')&&!e.target.closest('.guide-trigger')&&!e.target.closest('.days-trigger')) closeMiniMenus();});
 
 function getFriend(){return localStorage.getItem('saigon_friend')||'crystal';}
-function setFriend(k){localStorage.setItem('saigon_friend',k);closeFriendModal();updateFriendLabels();}
+function setFriend(k){
+  localStorage.setItem('saigon_friend',k);
+  closeFriendModal();
+  updateFriendLabels();
+  if(document.getElementById('expenseModal')?.classList.contains('show')&&typeof window.resetExpenseForm==='function')window.resetExpenseForm();
+  if(document.getElementById('momentsModal')?.classList.contains('show')&&typeof window.simplifyMomentsAuthor==='function')window.simplifyMomentsAuthor();
+}
 function updateFriendLabels(){const label=FRIENDS[getFriend()]||'👓 Crystal';document.querySelectorAll('[data-friend-label]').forEach(e=>e.textContent=label);}
 function openFriendModal(){$('mamaModal').classList.add('show')} function closeFriendModal(){$('mamaModal').classList.remove('show')}
 
@@ -103,8 +128,8 @@ function markConsumedManual(){
 }
 
 /* Stage 4C-6: legacy top-level Expenses handlers were removed.
-   Active Expenses API now lives in the Stage 4C-1 and Stage 4C-2 canonical
-   blocks near the end of this file. Keep closeExpenseModal as a simple modal
+   Active Expenses API lives in the Stage 4F-Q single canonical module
+   near the end of this file. Keep closeExpenseModal as a simple modal
    utility because HTML buttons call it directly. */
 function closeExpenseModal(){const m=$('expenseModal'); if(m) m.classList.remove('show')}
 
@@ -122,7 +147,7 @@ function openTripCard(key) {
   const content = document.getElementById('tripModalContent');
   const modal = document.getElementById('tripModal');
   if (!content || !modal) return;
-  content.innerHTML = `<div class="trip-onepage"><p class="kicker">Trip</p><h2>${t.title}</h2>${t.body}<div class="guide-next-row"><button class="pill" onclick="openTripCard('${prev}')">‹ Previous</button><button class="pill" onclick="openTripCard('${next}')">Next ›</button></div><p class="timestamp">Build · Stage 4F-Q</p></div>`;
+  content.innerHTML = `<div class="trip-onepage"><p class="kicker">Trip</p><h2>${t.title}</h2>${t.body}<div class="guide-next-row"><button class="pill" onclick="openTripCard('${prev}')">‹ Previous</button><button class="pill" onclick="openTripCard('${next}')">Next ›</button></div><p class="timestamp">Build · Stage 4F-R</p></div>`;
   modal.classList.add('show');
   const sheet=document.querySelector('#tripModal .trip-sheet');
   if(sheet) sheet.scrollTop=0;
@@ -194,32 +219,6 @@ function renderDashboard(){
   if(bar) bar.style.width=percent+'%';
   if(count) count.textContent=`${done} / ${total} Checklist Completed`;
 }
-
-function renderLatestExpenseMini(){
-  const box=document.getElementById('latestExpenseMini');
-  if(!box) return;
-  const arr=JSON.parse(localStorage.getItem('expenses')||'[]');
-  const latest=arr.map((e,i)=>({...e,_idx:i})).slice(-3).reverse();
-  if(!latest.length){
-    box.innerHTML='<p class="timestamp">No transactions yet.</p>';
-    return;
-  }
-  box.innerHTML=latest.map(e=>`<div class="expense-card">
-    <strong>${e.item}</strong>
-    <p class="timestamp">${formatTime(e.createdAt)}</p>
-    <p>${Number(e.total).toLocaleString()} VND · Paid by ${FRIENDS[e.paidBy]}</p>
-    <div class="entry-actions"><button class="mini-btn" onclick="editExpense(${e._idx})">✏️ Edit</button><button class="mini-btn" onclick="deleteExpense(${e._idx})">🗑 Delete</button></div>
-  </div>`).join('');
-}
-
-/* v2.1.9 alphabetical guide wrapper */
-const _originalOpenGuideCategory = openGuideCategory;
-openGuideCategory = function(cat){
-  /* Stage 1 cleanup note: this used to reassign CATEGORIES[cat] to a sorted copy,
-     permanently mutating canonical data on every call. Removed — _originalOpenGuideCategory()
-     already sorts a copy internally (see line ~19), so behaviour is unchanged. */
-  return _originalOpenGuideCategory(cat);
-};
 
 /* v2.1.11 safe modal close fallback */
 document.addEventListener('click', function(e){
@@ -398,7 +397,7 @@ function copyText(text){
   document.addEventListener('DOMContentLoaded',()=>{renderMoodButtons([]);renderMoments();renderExpenses();});
 })();
 
-/* Stage 4C-6: removed legacy v3.4 Expenses wrappers. Canonical Expenses render/history/open/save are defined in Stage 4C-1/4C-2. */
+/* Stage 4C-6: legacy v3.4 Expenses wrappers removed; Stage 4F-Q owns the single canonical Expenses module. */
 
 /* v3.5 guard: bottom bar is summary navigation; buttons on summary pages open tools */
 document.addEventListener('DOMContentLoaded',()=>{
@@ -425,39 +424,11 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 /* Stage 4C-6: removed legacy v3.7 Expenses save/open wrappers. */
 
-/* v3.9.3 Navigation & Branding Fix */
-(function(){
-  function clamp(n,min,max){return Math.max(min, Math.min(max,n));}
-  function positionMiniMenu(menu, trigger){
-    if(!menu || !trigger) return;
-    const rect = trigger.getBoundingClientRect();
-    const menuWidth = Math.min(230, window.innerWidth - 24);
-    const center = rect.left + rect.width/2;
-    const left = clamp(center, 12 + menuWidth/2, window.innerWidth - 12 - menuWidth/2);
-    menu.style.left = left + 'px';
-    menu.style.right = 'auto';
-    menu.style.width = menuWidth + 'px';
-  }
-  window.toggleMenu = function(id, trigger){
-    const m = document.getElementById(id);
-    const open = m && m.classList.contains('show');
-    closeMiniMenus();
-    if(m && !open){
-      positionMiniMenu(m, trigger || document.activeElement);
-      m.classList.add('show');
-    }
-  };
-  window.toggleTripMenu = function(){ toggleMenu('tripMenu', document.querySelector('.trip-trigger')); };
-  window.toggleGuideMenu = function(){ toggleMenu('guideMenu', document.querySelector('.guide-trigger')); };
-  window.toggleDays = function(){ toggleMenu('daysMenu', document.querySelector('.days-trigger')); };
-  window.addEventListener('resize', closeMiniMenus);
-})();
-
 /* Stage 4F-A: removed stale legacy dayN.html swipe handler. Active day route is day.html?day=N. */
 
 /* v3.9.6c Final UX Hotfix: current-user Moments author label.
    Stage 4C-6 removed the expense open/save/edit wrappers from this block;
-   Expense current-user defaults are handled by Stage 4C-1/4C-2. */
+   Expense current-user defaults are handled by the Stage 4F-Q module. */
 (function(){
   const DEFAULT_FRIEND = 'crystal';
   function currentUser(){
@@ -479,19 +450,13 @@ document.addEventListener('DOMContentLoaded',()=>{
   }
   window.simplifyMomentsAuthor = simplifyMomentsAuthor;
 
-  const previousSetFriend = window.setFriend;
-  window.setFriend = function(k){
-    if(typeof previousSetFriend === 'function') previousSetFriend(k);
-    if(document.getElementById('expenseModal')?.classList.contains('show') && typeof window.resetExpenseForm === 'function') window.resetExpenseForm();
-    if(document.getElementById('momentsModal')?.classList.contains('show')) simplifyMomentsAuthor();
-  };
 
   document.addEventListener('DOMContentLoaded',()=>{
     simplifyMomentsAuthor();
   });
 })();
 
-/* Stage 4C-6: removed legacy v3.9.6d paid-by wrapper chain. Paid-by UI is now owned by the Stage 4C-1/4C-2 canonical Expenses handlers. */
+/* Stage 4C-6: removed legacy v3.9.6d paid-by wrapper chain. Paid-by UI is owned by the Stage 4F-Q canonical Expenses module. */
 
 /* ============================================================================
    STAGE 1.5 — INFORMATION MIGRATION TEMPLATE: optional read-only helpers
