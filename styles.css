@@ -466,9 +466,7 @@ main,.content-page,.section,.dashboard{position:relative;z-index:1}
 .page-hero .lead,.module-hero .lead{margin:0!important;font-size:18px!important;line-height:1.58!important;font-weight:720!important;color:#46392f!important}
 .page-action-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:18px!important}
 /* Module colour accents remain subtle but consistent. */
-body:has(#momentsTimeline) .page-hero{background:linear-gradient(180deg,#f6d6cc,#fffaf2)!important}
-body:has(.expense-page-shell) .page-hero{background:linear-gradient(180deg,#d6e8d3,#fffaf2)!important}
-body:has(#tripModal) .page-hero{background:linear-gradient(180deg,#dbe6cf,#fffaf2)!important}
+body.trip-page .page-hero{background:linear-gradient(180deg,#dbe6cf,#fffaf2)!important}
 /* Days note: formal copy only, no development/update wording. */
 /* Full-height iPhone sheet style for Moments and Expenses input. */
 .moments-modal.show,.tools-modal.show{display:flex!important;align-items:flex-end!important;justify-content:center!important;padding:8px 8px calc(8px + env(safe-area-inset-bottom))!important;overflow:hidden!important}
@@ -1366,12 +1364,12 @@ body.home-bg section.home-brand-card.v37-dashboard-home{transform:none!important
   border-radius:0!important;
   box-shadow:none!important;
   mix-blend-mode:multiply!important;
-  opacity:.70!important;
-  filter:saturate(.90) contrast(1.06)!important;
+  opacity:1!important;
+  filter:saturate(1.04) contrast(1.16)!important;
 }
 @media(max-width:520px){
   .site-nav .brand-mark{width:50px!important;height:42px!important;flex-basis:50px!important}
-  .site-nav .brand-mark img{width:50px!important;height:42px!important;transform:scale(1.40)!important;opacity:.68!important}
+  .site-nav .brand-mark img{width:50px!important;height:42px!important;transform:scale(1.40)!important;opacity:1!important;filter:saturate(1.04) contrast(1.16)!important}
 }
 
 /* Higher-end editorial highlight: no full pink rectangle behind the title.
