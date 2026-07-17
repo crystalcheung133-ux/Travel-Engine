@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 
-<html lang="zh-Hant"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1" name="viewport"/><title>Day · Saigon Companion</title><link href="manifest.json" rel="manifest"/><meta content="#8A4F2D" name="theme-color"/><meta content="yes" name="apple-mobile-web-app-capable"/><meta content="Saigon" name="apple-mobile-web-app-title"/><link href="icon-192.png" rel="apple-touch-icon"/><link href="styles.css?v=4e7" rel="stylesheet"/></head><body><nav class="site-nav"><a class="brand" href="index.html"><span class="brand-mark"><img alt="" src="logo-watermark-monogram.png"/></span>Saigon Companion</a><button class="friend-pill" onclick="openFriendModal()"><span data-friend-label="">👓 Crystal</span></button></nav><main class="content-page" id="dynamicDayRoot" aria-live="polite"></main>
-<script src="data.js"></script><script src="script.js"></script>
+<html lang="zh-Hant"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1" name="viewport"/><title>Day · Mum’s 70th Companion</title><link href="manifest.json" rel="manifest"/><meta content="#8F4F61" name="theme-color"/><meta content="yes" name="apple-mobile-web-app-capable"/><meta content="Tokyo" name="apple-mobile-web-app-title"/><link href="icon-192.png" rel="apple-touch-icon"/><link href="styles.css?v=tokyo2.0" rel="stylesheet"/></head><body><nav class="site-nav"><a class="brand" href="index.html"><span class="brand-mark"><img alt="" data-brand-logo="header" src="tokyo-70-logo.png"/></span><span data-brand-text="navLabel">Mum’s 70th Companion</span></a><button class="friend-pill" onclick="openFriendModal()"><span data-friend-label="">✨ Crystal</span></button></nav><main aria-live="polite" class="content-page" id="dynamicDayRoot"></main>
+<script src="data.js"></script><script src="script.js?v=tokyo2.0"></script>
 <script>
 (function(){
   const DAY_RENDER_DATA = ITINERARY_DATA; // Stage 3E: canonical data now lives in data.js
@@ -11,43 +11,75 @@
   const data = DAY_RENDER_DATA[day];
   const root = document.getElementById('dynamicDayRoot');
   if(!data){
-    document.title = 'Day not found · Saigon Companion';
+    document.title = 'Day not found · Mum’s 70th Companion';
     root.innerHTML = '<div class="page-hero"><p class="kicker">Days</p><h1>Day not found</h1><p>Please choose a day from the Days menu.</p></div>';
     return;
   }
   document.title = data.title;
-  const legend = data.legend.map(x => `<span>${esc(x)}</span>`).join('');
+  function buildDriveBriefing(dayData){
+    const d=dayData.drive;
+    if(!d) return '';
+    const primary=d.primaryMap
+      ? `<a class="drive-nav-primary" href="${esc(d.primaryMap)}" target="_blank" rel="noopener">🚙 Start Today’s Drive</a>`
+      : '';
+    const backup=d.backupMap
+      ? `<a class="drive-nav-backup" href="${esc(d.backupMap)}" target="_blank" rel="noopener">Open Backup Route</a>`
+      : '';
+    const fuel=d.fuelAdvice
+      ? `<p class="drive-nav-fuel"><strong>⛽ Fuel</strong> ${esc(d.fuelAdvice)}</p>`
+      : '';
+    const backupNote=d.backupMap && d.contingency
+      ? `<p class="drive-nav-backup-note"><strong>⚠️ Route backup</strong> ${esc(d.contingency)}</p>`
+      : '';
+    return `<section class="drive-briefing drive-navigation-hub" aria-label="Today’s navigation">
+      <div class="drive-briefing-head"><div><p class="kicker">Today’s drive</p><h2>${esc(d.route)}</h2></div><span class="drive-briefing-icon">🚙</span></div>
+      <div class="drive-briefing-stats"><div><small>Distance</small><strong>${esc(d.distance)}</strong></div><div><small>Wheel time</small><strong>${esc(d.drivingTime)}</strong></div><div><small>Road</small><strong>${esc(d.road)}</strong></div></div>
+      ${d.note ? `<p class="drive-briefing-note">${esc(d.note)}</p>` : ''}
+      ${fuel}${backupNote}
+      <div class="drive-navigation-actions">${primary}${backup}</div>
+    </section>`;
+  }
+  const driveBriefing=buildDriveBriefing(data);
   const items = data.items.map(item => {
     const detailHtml = (item.details || []).map(text => `<p>${esc(text)}</p>`).join('');
-    const routeHtml = item.route ? `<div class="route-hint"><strong>🚕 To next stop</strong><br/>${esc(item.route)}</div>` : '';
-    const mapHtml = item.map ? `<a class="timeline-action timeline-action--map" href="${esc(item.map)}" target="_blank">Map</a>` : '';
-    const guideIds = Array.isArray(item.guideIds) && item.guideIds.length ? item.guideIds : [item.placeId || item.id];
-    const directoryHtml = item.showShoppingDirectory
-      ? `<button class="timeline-action timeline-action--directory" onclick="location.href='guide.html#shopping-directory'">Shopping List</button>`
+    const routeHtml = item.route ? `<div class="route-hint"><strong>Next leg</strong><br/>${esc(item.route)}</div>` : '';
+    const requestedGuideIds = Array.isArray(item.guideIds) && item.guideIds.length ? item.guideIds : [item.placeId || item.id];
+    const guideIds = requestedGuideIds.filter(key => key && typeof PLACES !== 'undefined' && PLACES[key]);
+    const hasMultipleOptions = guideIds.length > 1;
+    const mapHtml = item.map && !hasMultipleOptions
+      ? `<a class="timeline-action timeline-action--map" href="${esc(item.map)}" target="_blank" rel="noopener">🧭 Navigate</a>`
       : '';
-    const guideHtml = guideIds.map(key => {
-      const place = (typeof PLACES !== 'undefined' && PLACES[key]) || {};
-      const label = place.title ? `${place.title} Guide` : 'Guide';
-      return `<button class="timeline-action timeline-action--guide" onclick="location.href='place.html?id=${esc(key)}'">${esc(label)}</button>`;
-    }).join('');
-    const actionCount = guideIds.length + (item.showShoppingDirectory ? 1 : 0) + (item.map ? 1 : 0) + 1;
+    const directoryHtml = item.showShoppingDirectory
+      ? `<button class="timeline-action timeline-action--directory" onclick="location.href='guide.html#shopping-directory'">🛍 Shopping List</button>`
+      : '';
+    const guideHtml = guideIds.length
+      ? `<button class="timeline-action timeline-action--guide" onclick='openGuideGroupFromDay(${JSON.stringify(guideIds)},${JSON.stringify(item.id)})'>📖 Guide</button>`
+      : '';
+    const ratings=guideIds.map(key=>{
+      const place=(typeof PLACES!=='undefined'&&PLACES[key])||{};
+      const worthLine=(place.worth||[]).find(line=>/★/.test(String(line)))||'';
+      const match=String(worthLine).match(/(★{1,5})(?:☆{0,4})?/);
+      if(!match)return '';
+      const note=String(worthLine).split('·').slice(2).join('·').trim();
+      return `<span class="timeline-worth" title="${esc(note||'Worth rating')}"><b>${esc(match[1])}</b>${note?`<small>${esc(note)}</small>`:''}</span>`;
+    }).filter(Boolean).join('');
+    const actionCount = (guideIds.length ? 1 : 0) + (item.showShoppingDirectory ? 1 : 0) + (mapHtml ? 1 : 0) + 1;
     const actionClass = actionCount > 3 ? 'timeline-actions timeline-actions--multi' : 'timeline-actions';
     return `
     <div class="timeline-item" id="${esc(item.id)}">
       <div class="timeline-time">${esc(item.time)}</div>
       <div class="timeline-main">
-        <h3>${esc(item.title)}</h3>
+        <div class="timeline-title-row"><h3>${esc(item.title)}</h3>${ratings}</div>
         ${detailHtml}
         ${routeHtml}
         <div class="${actionClass}">
-          ${directoryHtml}${guideHtml}
-          ${mapHtml}
-          <button class="timeline-action timeline-action--moment" onclick="openMomentsModal('${esc(item.id)}')">Moment</button>
+          ${mapHtml}${directoryHtml}${guideHtml}
+          <button class="timeline-action timeline-action--moment" onclick="openMomentsModal('${esc(item.id)}')">✨ Moment</button>
         </div>
       </div>
     </div>`;
   }).join('');
-  root.innerHTML = `<div class="page-hero"><p class="kicker">${esc(data.kicker)}</p><h1>${esc(data.heading)}</h1><div class="time-legend">${legend}</div></div><section class="timeline">${items}</section>`;
+  root.innerHTML = `<div class="page-hero day-page-hero"><p class="kicker">${esc(data.kicker)}</p><h1>${esc(data.heading)}</h1></div>${driveBriefing}<section class="timeline">${items}</section>`;
 
   // Stage 4F-L: native hash scrolling can run before dynamic cards exist.
   // Re-resolve the requested card after render and offset the sticky top bar.
@@ -82,35 +114,20 @@
     const dy = t.clientY - touchStartY;
     if(Math.abs(dx) < 64 || Math.abs(dx) < Math.abs(dy) * 1.25) return;
     const current = Number(day);
-    if(dx < 0 && current < 5) location.href = `day.html?day=${current + 1}`;
+    if(dx < 0 && current < Math.max(...Object.keys(ITINERARY_DATA||{}).map(Number))) location.href = `day.html?day=${current + 1}`;
     if(dx > 0 && current > 1) location.href = `day.html?day=${current - 1}`;
   }, {passive:true});
 })();
-</script><div class="mini-menu" id="guideMenu"><button onclick="openGuideCategory('ATTRACTIONS')"><span><span class="menu-title">📍 ATTRACTIONS</span></span><span>›</span></button><button onclick="openGuideCategory('CAFÉS')"><span><span class="menu-title">☕ CAFÉS</span></span><span>›</span></button><button onclick="openGuideCategory('EXPERIENCE')"><span><span class="menu-title">🍳 EXPERIENCE</span></span><span>›</span></button><button onclick="openGuideCategory('RESTAURANTS')"><span><span class="menu-title">🍽 RESTAURANTS</span></span><span>›</span></button><button onclick="openGuideCategory('SHOP')"><span><span class="menu-title">🛍 SHOP</span></span><span>›</span></button><button onclick="openGuideCategory('SPA')"><span><span class="menu-title">💆 SPA</span></span><span>›</span></button><button onclick="openGuideCategory('STAY')"><span><span class="menu-title">🏨 STAY</span></span><span>›</span></button></div><div class="mini-menu" id="tripMenu">
-<a href="#" onclick="openTripCard('checklist');return false;"><span><span class="menu-title">✅ Checklist</span><span class="menu-sub">Before the Trip</span></span><span>›</span></a>
-<a href="#" onclick="openTripCard('city');return false;"><span><span class="menu-title">🇻🇳 City</span><span class="menu-sub">Ho Chi Minh</span></span><span>›</span></a>
-<a href="#" onclick="openTripCard('emergency');return false;"><span><span class="menu-title">☎️ Emergency</span><span class="menu-sub">Useful numbers</span></span><span>›</span></a>
-<a href="#" onclick="openTripCard('flights');return false;"><span><span class="menu-title">✈️ Flights</span><span class="menu-sub">VJ082 · VN781</span></span><span>›</span></a>
-<a href="#" onclick="openTripCard('money');return false;"><span><span class="menu-title">💵 Money</span><span class="menu-sub">AUD / VND notes</span></span><span>›</span></a>
-<a href="#" onclick="openTripCard('stay');return false;"><span><span class="menu-title">🏨 Stay</span><span class="menu-sub">Fusion Original</span></span><span>›</span></a>
-<a href="#" onclick="openTripCard('tips');return false;"><span><span class="menu-title">⚠️ Tips</span><span class="menu-sub">Travel notes</span></span><span>›</span></a>
-<a href="#" onclick="openTripCard('weather');return false;"><span><span class="menu-title">☀️ Weather</span><span class="menu-sub">Late October</span></span><span>›</span></a>
-</div><div class="mini-menu" id="daysMenu">
-<a href="day.html?day=1"><span><span class="menu-title">👋 Day 1</span><span class="menu-sub">Hello Saigon<br/>30 Oct • Friday</span></span><span>›</span></a>
-<a href="day.html?day=2"><span><span class="menu-title">🍳 Day 2</span><span class="menu-sub">Made in Saigon<br/>31 Oct • Saturday</span></span><span>›</span></a>
-<a href="day.html?day=3"><span><span class="menu-title">🌿 Day 3</span><span class="menu-sub">A Slower Side<br/>1 Nov • Sunday</span></span><span>›</span></a>
-<a href="day.html?day=4"><span><span class="menu-title">🏛 Day 4</span><span class="menu-sub">City Contrast<br/>2 Nov • Monday</span></span><span>›</span></a>
-<a href="day.html?day=5"><span><span class="menu-title">✈️ Day 5</span><span class="menu-sub">Until Next Time<br/>3 Nov • Tuesday</span></span><span>›</span></a></div>
-<nav class="app-nav">
+</script><div class="mini-menu" id="guideMenu"></div><div class="mini-menu" id="tripMenu"></div><div class="mini-menu" id="daysMenu"></div><nav class="app-nav">
 <button class="trip-trigger" onclick="toggleTripMenu()" type="button"><span>🧳</span><small>Trip</small></button>
 <button class="guide-trigger" onclick="toggleGuideMenu()" type="button"><span>📖</span><small>Guide</small></button>
 <button class="days-trigger" onclick="toggleDays()" type="button"><span>🗓</span><small>Days</small></button>
 <a class="summary-link" href="moments.html"><span>✨</span><small>Moments</small></a>
 <a class="summary-link" href="expenses.html"><span>💸</span><small>Expenses</small></a>
 </nav>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));}</script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=tokyo2.0').catch(()=>{}));}</script>
 <div class="trip-modal" id="tripModal"><div class="trip-sheet"><button class="trip-close" onclick="closeTripModal()" type="button">×</button><div id="tripModalContent"></div></div></div>
 <div class="guide-modal" id="guideModal"><div class="guide-sheet"><button class="guide-close" onclick="closeGuideModal()" type="button">×</button><div id="guideModalContent"></div></div></div>
-<div class="moments-modal" id="momentsModal"><div class="moments-sheet"><button class="moments-close" onclick="closeMomentsModal()" type="button">×</button><p class="kicker">MEMORY BOOK</p><h2 id="momentsTitle">Moment</h2><p class="lead modal-intro" id="momentsIntro">每一個地方都可以留底 rating、something to say 同相片。旅行完之後，呢度就係四位朋友嘅 memory book。</p><p><span class="status-badge" id="momentsFriend">Friend</span> <button class="mini-btn" onclick="openFriendModal()">Change Friend</button></p><div class="moments-form"><input id="momentsRating" type="hidden" value="0"/><div class="star-row"><span class="star" onclick="setStars(1)">⭐</span><span class="star" onclick="setStars(2)">⭐</span><span class="star" onclick="setStars(3)">⭐</span><span class="star" onclick="setStars(4)">⭐</span><span class="star" onclick="setStars(5)">⭐</span></div><p class="mood-help">Choose up to 2 moods</p><div class="mood-grid" id="moodGrid"></div><textarea id="momentsText" placeholder="Something to say..."></textarea><div class="photo-input">📷 Add Photo（Camera / Photo Library）</div><button class="btn" onclick="saveMoments()">Save</button></div></div></div>
-<div class="unexpected-modal" id="unexpectedModal"><div class="unexpected-sheet"><button class="unexpected-close" onclick="closeUnexpectedModal()" type="button">×</button><p class="kicker">Moments</p><h2>Leave a Moment</h2><p class="lead">每一個地方都可以留底 rating、something to say 同相片。旅行完之後，呢度就係四位朋友嘅 memory book。</p><p><span class="status-badge" id="unexpectedFriend">Friend</span></p><textarea id="unexpectedText" placeholder="Capture this moment..." style="width:100%;min-height:120px;border:1px solid var(--line);border-radius:18px;background:#fffaf2;padding:14px;font:inherit;color:var(--ink)"></textarea><div class="photo-input">📷 Add Photo（Camera / Photo Library）</div><button class="btn" onclick="saveUnexpected()">Save</button></div></div>
-<div class="tools-modal" id="expenseModal"><div class="tools-sheet"><button class="tools-close" onclick="closeExpenseModal()" type="button">×</button><p class="kicker">TRIP EXPENSES</p><h2 id="expenseModalTitle">💰 What did we spend?</h2><p class="lead modal-intro" id="expenseIntro">記低每一筆公數或個人消費，系統會自動計 Personal Spend 同 Settlement。</p><div class="expense-form"><input id="expenseItem" placeholder="Item e.g. Little Bear Dinner"/><input autocomplete="off" id="expenseTotal" inputmode="numeric" pattern="[0-9]*" placeholder="Total VND" type="tel"/><label>Paid by</label><select class="btn" id="expensePaidBy" onchange="syncConsumedIfAuto()"><option value="christal">🧸 Christal</option><option selected="" value="crystal">👓 Crystal</option><option value="mero">✝️ Mero</option><option value="vivian">👟 Vivian</option></select><label class="check-row"><input id="expensePersonal" onchange="updateExpenseMode()" type="checkbox"/> Personal Expense</label><div id="splitBetweenBlock"><p>Split between</p><div class="expense-split-tools"><button class="mini-btn" onclick="splitAll()" type="button">Split between all</button><button class="mini-btn" onclick="clearAllSplit()" type="button">Clear all</button></div><label><input checked="" data-split="" type="checkbox" value="christal"/> 🧸 Christal</label><br/><label><input checked="" data-split="" type="checkbox" value="crystal"/> 👓 Crystal</label><br/><label><input checked="" data-split="" type="checkbox" value="mero"/> ✝️ Mero</label><br/><label><input checked="" data-split="" type="checkbox" value="vivian"/> 👟 Vivian</label></div><div id="consumedByBlock" style="display:none"><label>Consumed by <span class="timestamp">(same as paid by unless changed)</span></label><select class="btn" id="expenseConsumedBy" onchange="markConsumedManual()"><option value="christal">🧸 Christal</option><option selected="" value="crystal">👓 Crystal</option><option value="mero">✝️ Mero</option><option value="vivian">👟 Vivian</option></select></div><br/><button class="btn" id="expenseSaveButton" onclick="saveExpense()">Save Expense</button></div><p class="timestamp">Save 完會留喺呢個視窗，可以連續輸入多筆；關閉後 Summary 會即時更新。</p></div></div><div class="mama-modal" id="mamaModal"><div class="guide-sheet"><button class="mama-close" onclick="closeFriendModal()" type="button">×</button><p class="kicker">Friend</p><h2>Choose Friend</h2><div class="category-pop-list friend-choice-list"><button onclick="setFriend('christal')">🧸 Christal</button><button onclick="setFriend('crystal')">👓 Crystal</button><button onclick="setFriend('mero')">✝️ Mero</button><button onclick="setFriend('vivian')">👟 Vivian</button></div></div></div></body></html>
+<div class="moments-modal" id="momentsModal"><div class="moments-sheet"><button class="moments-close" onclick="closeMomentsModal()" type="button">×</button><p class="kicker">MEMORY BOOK</p><h2 id="momentsTitle">Moment</h2><p class="lead modal-intro" id="momentsIntro">Add a rating, a short note and a photo at any stop. After the trip, this becomes the three families’ shared memory book.</p><p><span class="status-badge" id="momentsFriend">Friend</span> <button class="mini-btn" onclick="openFriendModal()">Change Family</button></p><div class="moments-form"><input id="momentsRating" type="hidden" value="0"/><div class="star-row"><span class="star" onclick="setStars(1)">⭐</span><span class="star" onclick="setStars(2)">⭐</span><span class="star" onclick="setStars(3)">⭐</span><span class="star" onclick="setStars(4)">⭐</span><span class="star" onclick="setStars(5)">⭐</span></div><p class="mood-help">Choose up to 2 moods</p><div class="mood-grid" id="moodGrid"></div><textarea id="momentsText" placeholder="Something to say..."></textarea><div class="photo-input">📷 Add Photo (Camera / Photo Library)</div><button class="btn" onclick="saveMoments()">Save</button></div></div></div>
+<div class="unexpected-modal" id="unexpectedModal"><div class="unexpected-sheet"><button class="unexpected-close" onclick="closeUnexpectedModal()" type="button">×</button><p class="kicker">Moments</p><h2>Leave a Moment</h2><p class="lead">Add a rating, a short note and a photo at any stop. After the trip, this becomes the three families’ shared memory book.</p><p><span class="status-badge" id="unexpectedFriend">Friend</span></p><textarea id="unexpectedText" placeholder="Capture this moment..." style="width:100%;min-height:120px;border:1px solid var(--line);border-radius:18px;background:#fffaf2;padding:14px;font:inherit;color:var(--ink)"></textarea><div class="photo-input">📷 Add Photo (Camera / Photo Library)</div><button class="btn" onclick="saveUnexpected()">Save</button></div></div>
+<div class="tools-modal" id="expenseModal"><div class="tools-sheet"><button class="tools-close" onclick="closeExpenseModal()" type="button">×</button><p class="kicker">TRIP EXPENSES</p><h2 id="expenseModalTitle">💰 What did we spend?</h2><p class="lead modal-intro" id="expenseIntro">Record each shared or personal expense. Personal Spend and Settlement update automatically.</p><div class="expense-form"><input id="expenseItem" placeholder="Item e.g. Family Dinner"/><input autocomplete="off" id="expenseTotal" inputmode="numeric" pattern="[0-9]*" placeholder="Total JPY" type="tel"/><label>Paid by</label><select class="btn" id="expensePaidBy" onchange="syncConsumedIfAuto()"><option selected="" value="crystal">✨ Crystal</option><option value="ava">🌸 Ava</option><option value="mum">🎂 Mum</option></select><label class="check-row"><input id="expensePersonal" onchange="updateExpenseMode()" type="checkbox"/> Personal Expense</label><div id="splitBetweenBlock"><p>Split between</p><div class="expense-split-tools"><button class="mini-btn" onclick="splitAll()" type="button">Split between all</button><button class="mini-btn" onclick="clearAllSplit()" type="button">Clear all</button></div><label><input checked="" data-split="" type="checkbox" value="crystal"/> ✨ Crystal</label><br/><label><input checked="" data-split="" type="checkbox" value="ava"/> 🌸 Ava</label><br/><label><input data-split="" type="checkbox" value="mum"/> 🎂 Mum</label></div><div id="consumedByBlock" style="display:none"><label>Consumed by <span class="timestamp">(same as paid by unless changed)</span></label><select class="btn" id="expenseConsumedBy" onchange="markConsumedManual()"><option selected="" value="crystal">✨ Crystal</option><option value="ava">🌸 Ava</option><option value="mum">🎂 Mum</option></select></div><br/><button class="btn" id="expenseSaveButton" onclick="saveExpense()">Save Expense</button></div><p class="timestamp">After saving, this window stays open so you can enter another expense. The summary updates when you close it.</p></div></div><div class="mama-modal" id="mamaModal"><div class="guide-sheet"><button class="mama-close" onclick="closeFriendModal()" type="button">×</button><p class="kicker">Traveller</p><h2>Choose Traveller</h2><div class="category-pop-list friend-choice-list"><button onclick="setFriend('crystal')">✨ Crystal</button><button onclick="setFriend('ava')">🌸 Ava</button><button onclick="setFriend('mum')">🎂 Mum</button></div></div></div></body></html>

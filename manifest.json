@@ -1,24 +1,20 @@
 {
-  "name": "Saigon Companion",
-  "short_name": "Saigon",
-  "start_url": "./index.html",
-  "scope": "./",
+  "name": "Mum’s 70th Tokyo Onsen & Fuji Companion",
+  "short_name": "Tokyo 70",
+  "start_url": "index.html",
   "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#FFF7ED",
-  "theme_color": "#8A4F2D",
+  "background_color": "#F8EEE9",
+  "theme_color": "#8F4F61",
   "icons": [
     {
       "src": "icon-192.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     },
     {
       "src": "icon-512.png",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     }
   ]
 }

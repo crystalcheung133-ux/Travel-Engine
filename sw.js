@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ccmv-travel-engine-stage4e-7-hero-logo-source-fix';
+const CACHE_NAME = 'tokyo-mum70-v2';
 const ASSETS = [
   './',
   './index.html',
@@ -11,9 +11,7 @@ const ASSETS = [
   './offline.html',
   './icon-192.png',
   './icon-512.png',
-  './logo-watermark-monogram.png',
-  './logo-monogram-transparent.png',
-  './ccmv-logo-calibrated.png',
+  './tokyo-70-logo.png',
   './guide.html',
   './itinerary.html',
   './memory.html',
@@ -45,7 +43,11 @@ async function networkFirst(request) {
     if (response && response.ok) cache.put(request, response.clone());
     return response;
   } catch (error) {
-    const cached = await caches.match(request);
+    let cached = await caches.match(request);
+    if (!cached) {
+      const url = new URL(request.url);
+      cached = await caches.match(url.pathname.split('/').pop() || './index.html');
+    }
     return cached || caches.match('./offline.html');
   }
 }

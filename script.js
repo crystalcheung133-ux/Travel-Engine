@@ -1,4 +1,41 @@
 
+function applyTripBranding(){
+  if(typeof TRIP_BRAND==='undefined') return;
+  document.querySelectorAll('[data-brand-text]').forEach(function(el){
+    var key=el.getAttribute('data-brand-text');
+    var value=TRIP_BRAND[key];
+    if(value==null) return;
+    if(key==='splashSlogan') el.innerHTML=String(value).replace(/\n/g,'<br>');
+    else el.textContent=value;
+  });
+  document.querySelectorAll('[data-brand-logo]').forEach(function(img){
+    var key=img.getAttribute('data-brand-logo');
+    if(TRIP_BRAND.logo && TRIP_BRAND.logo[key]) img.src=TRIP_BRAND.logo[key];
+  });
+  var suffix=TRIP_BRAND.browserTitleSuffix || TRIP_BRAND.appName;
+  if(suffix && document.title){
+    document.title=document.title.replace(/Tokyo(?: Onsen & Fuji)? Companion/g,suffix);
+  }
+}
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',applyTripBranding);
+else applyTripBranding();
+
+function tripDateParts(date=new Date()){
+  const cfg=(typeof TRIP_CALENDAR!=='undefined'&&TRIP_CALENDAR)||{startDate:'2026-09-22',timeZone:'Pacific/Auckland'};
+  const parts=new Intl.DateTimeFormat('en-CA',{timeZone:cfg.timeZone||'Pacific/Auckland',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(date);
+  const out={};
+  parts.forEach(part=>{if(part.type!=='literal')out[part.type]=part.value;});
+  return `${out.year}-${out.month}-${out.day}`;
+}
+function tripDayNumber(date=new Date()){
+  const cfg=(typeof TRIP_CALENDAR!=='undefined'&&TRIP_CALENDAR)||{startDate:'2026-09-22'};
+  const toUtc=value=>{const [y,m,d]=String(value).split('-').map(Number);return Date.UTC(y,m-1,d);};
+  const raw=Math.floor((toUtc(tripDateParts(date))-toUtc(cfg.startDate))/86400000)+1;
+  const available=typeof ITINERARY_DATA!=='undefined'?Object.keys(ITINERARY_DATA).map(Number).filter(Number.isFinite):[1];
+  return Math.min(Math.max(...available,1),Math.max(1,raw));
+}
+window.tripDayNumber=tripDayNumber;
+
 
 /* ============================================================================
    TRAVEL ENGINE ACTIVE-SOURCE NOTE — Stage 4F-S4
@@ -24,11 +61,72 @@ function visitDayHTML(key){
 function placeHref(key){
   return `place.html?id=${encodeURIComponent(key)}`;
 }
+const GUIDE_NAV_CONTEXT_KEY='ccmv_guide_nav_context';
+const GUIDE_NAV_REOPEN_KEY='ccmv_guide_nav_reopen';
+function saveGuideNavigationContext(category, options){
+  const opts=options||{};
+  try{
+    sessionStorage.setItem(GUIDE_NAV_CONTEXT_KEY,JSON.stringify({
+      category,
+      sourceUrl:opts.sourceUrl||window.location.href,
+      sourceType:opts.sourceType||'guide',
+      savedAt:Date.now()
+    }));
+  }catch(e){}
+}
+function openGuideFromDay(key,itemId){
+  const place=(typeof PLACES!=='undefined'&&PLACES[key])||{};
+  const sourceUrl=`${location.pathname}${location.search}${itemId?`#${encodeURIComponent(itemId)}`:''}`;
+  saveGuideNavigationContext(place.cat||'GUIDE',{sourceUrl,sourceType:'day'});
+  window.location.href=placeHref(key);
+}
+function openGuideGroupFromDay(keys,itemId){
+  const clean=[...new Set((Array.isArray(keys)?keys:[]).filter(key=>key&&typeof PLACES!=='undefined'&&PLACES[key]))];
+  if(!clean.length) return;
+  const first=PLACES[clean[0]]||{};
+  const sourceUrl=`${location.pathname}${location.search}${itemId?`#${encodeURIComponent(itemId)}`:''}`;
+  saveGuideNavigationContext(first.cat||'GUIDE',{sourceUrl,sourceType:'day'});
+  // RC11K: confirmed single destinations open immediately. Only genuine alternatives show a choice page.
+  window.location.href=clean.length===1 ? placeHref(clean[0]) : `place.html?ids=${encodeURIComponent(clean.join(','))}`;
+}
+function readGuideNavigationContext(){
+  try{return JSON.parse(sessionStorage.getItem(GUIDE_NAV_CONTEXT_KEY)||'null');}
+  catch(e){return null;}
+}
+function clearGuideNavigationContext(){
+  try{
+    sessionStorage.removeItem(GUIDE_NAV_CONTEXT_KEY);
+    sessionStorage.removeItem(GUIDE_NAV_REOPEN_KEY);
+  }catch(e){}
+}
 function goPlace(key){
   window.location.href = placeHref(key);
 }
+function closePlaceDetail(){
+  const context=readGuideNavigationContext();
+  if(context?.category&&context?.sourceUrl){
+    if(context.sourceType!=='day'){
+      try{sessionStorage.setItem(GUIDE_NAV_REOPEN_KEY,context.category);}catch(e){}
+    }else{
+      try{sessionStorage.removeItem(GUIDE_NAV_CONTEXT_KEY);}catch(e){}
+    }
+    window.location.href=context.sourceUrl;
+    return;
+  }
+  window.location.href='guide.html';
+}
+function restoreGuideNavigationLayer(){
+  let category='';
+  try{
+    category=sessionStorage.getItem(GUIDE_NAV_REOPEN_KEY)||'';
+    sessionStorage.removeItem(GUIDE_NAV_REOPEN_KEY);
+  }catch(e){}
+  if(category)requestAnimationFrame(()=>openGuideCategory(category));
+}
+document.addEventListener('DOMContentLoaded',restoreGuideNavigationLayer);
 
 function $(id){return document.getElementById(id);}
+function escapeHTML(value){return String(value ?? '').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
 function closeMiniMenus(){document.querySelectorAll('.mini-menu').forEach(m=>m.classList.remove('show'));}
 function clampMenuPosition(n,min,max){return Math.max(min,Math.min(max,n));}
 function positionMiniMenu(menu,trigger){
@@ -53,16 +151,18 @@ function toggleDays(){toggleMenu('daysMenu',document.querySelector('.days-trigge
 window.addEventListener('resize',closeMiniMenus);
 document.addEventListener('click',e=>{if(!e.target.closest('.mini-menu')&&!e.target.closest('.trip-trigger')&&!e.target.closest('.guide-trigger')&&!e.target.closest('.days-trigger')) closeMiniMenus();});
 
-function getFriend(){return localStorage.getItem('saigon_friend')||'crystal';}
+function getFriend(){return localStorage.getItem('tokyo_friend')||'crystal';}
 function setFriend(k){
-  localStorage.setItem('saigon_friend',k);
+  localStorage.setItem('tokyo_friend',k);
   closeFriendModal();
   updateFriendLabels();
   if(document.getElementById('expenseModal')?.classList.contains('show')&&typeof window.resetExpenseForm==='function')window.resetExpenseForm();
   if(document.getElementById('momentsModal')?.classList.contains('show')&&typeof window.simplifyMomentsAuthor==='function')window.simplifyMomentsAuthor();
+  if(typeof window.refreshExpenseAdminUI==='function')window.refreshExpenseAdminUI();
 }
-function updateFriendLabels(){const label=FRIENDS[getFriend()]||'👓 Crystal';document.querySelectorAll('[data-friend-label]').forEach(e=>e.textContent=label);}
-function openFriendModal(){$('mamaModal').classList.add('show')} function closeFriendModal(){$('mamaModal').classList.remove('show')}
+function updateFriendLabels(){const label=FRIENDS[getFriend()]||'✨ Crystal';document.querySelectorAll('[data-friend-label]').forEach(e=>e.textContent=label);}
+function renderFriendChoices(){const list=document.querySelector('#mamaModal .friend-choice-list');if(!list)return;list.innerHTML=Object.entries(FRIENDS).map(([key,label])=>`<button type="button" onclick="setFriend('${key}')">${label}</button>`).join('');}
+function openFriendModal(){renderFriendChoices();$('mamaModal').classList.add('show')} function closeFriendModal(){$('mamaModal').classList.remove('show')}
 
 
 function applyGuideHashView(){
@@ -85,6 +185,7 @@ window.addEventListener('hashchange',applyGuideHashView);
 document.addEventListener('DOMContentLoaded',applyGuideHashView);
 
 function openGuideCategory(cat){
+ saveGuideNavigationContext(cat);
  const list=(CATEGORIES[cat]||[]).slice().sort((a,b)=>String(a.title||'').localeCompare(String(b.title||'')));
  if(cat==='SHOP'){
   const directoryRow=`<button onclick="openShoppingDirectoryView()"><span><span class="guide-list-title">🛍 Shopping Directory</span><span class="guide-list-sub">Optional shops · Near · Best with Day</span></span><span>↓</span></button>`;
@@ -99,7 +200,7 @@ function openGuideCategory(cat){
 }
 
 function quickInfoInnerHTML(g,key){
- return `<div class="quick-info-top"><span class="category-tag">${g.categoryLabel||g.cat||'Guide'}</span></div><div class="quick-info-grid"><div class="quick-info-row"><span class="quick-info-icon">📍</span><span><span class="quick-info-label">Address</span><span class="quick-info-value">${g.address||'Check before visit'}</span></span></div><div class="quick-info-row"><span class="quick-info-icon">🕘</span><span><span class="quick-info-label">Hours</span><span class="quick-info-value">${g.hours||'Check before visit'}</span></span></div><div class="quick-info-row"><span class="quick-info-icon">💰</span><span><span class="quick-info-label">Price</span><span class="quick-info-value">${g.price||'Varies'}</span></span></div>${visitDayHTML(key)}</div><div class="quick-info-actions"><a class="map-button" href="${g.maps}" target="_blank" rel="noopener">🗺 Open Google Maps</a><button class="moment-button" aria-label="Add Moment" onclick="openMomentsModal('${key}')">✨</button></div>`;
+ return `<div class="quick-info-top"><span class="category-tag">${g.categoryLabel||g.cat||'Guide'}</span></div><div class="quick-info-grid"><div class="quick-info-row"><span class="quick-info-icon">📍</span><span><span class="quick-info-label">Address</span><span class="quick-info-value">${g.address||'Check before visit'}</span></span></div><div class="quick-info-row"><span class="quick-info-icon">🕘</span><span><span class="quick-info-label">Hours</span><span class="quick-info-value">${g.hours||'Check before visit'}</span></span></div><div class="quick-info-row"><span class="quick-info-icon">💰</span><span><span class="quick-info-label">Price</span><span class="quick-info-value">${g.price||'Varies'}</span></span></div>${visitDayHTML(key)}</div><div class="quick-info-actions"><a class="map-button" href="${g.maps}" target="_blank" rel="noopener">🗺 Open Google Maps</a><button class="moment-button" aria-label="Add Moment" onclick="openMomentsModal('${key}')">✨ Moment</button></div>`;
 }
 function quickInfoHTML(g,key){
  return `<div class="quick-info-card">${quickInfoInnerHTML(g,key)}</div>`;
@@ -115,7 +216,7 @@ function openGuideModal(key){
  const sheet=document.querySelector('#guideModal .guide-sheet');
  if(sheet) sheet.scrollTop=0;
 }
-function closeGuideModal(){$('guideModal').classList.remove('show')}
+function closeGuideModal(){$('guideModal').classList.remove('show');clearGuideNavigationContext()}
 
 let currentMomentKey='';
 function closeMomentsModal(){$('momentsModal').classList.remove('show')}
@@ -131,23 +232,45 @@ var openMomentsModal, saveMoments, editMoment, deleteMoment, renderMoments;
 
 function openUnexpectedModal(){$('unexpectedFriend').textContent=FRIENDS[getFriend()];$('unexpectedText').value='';$('unexpectedModal').classList.add('show')}
 function closeUnexpectedModal(){$('unexpectedModal').classList.remove('show')}
-function saveUnexpected(){const arr=JSON.parse(localStorage.getItem('moments_freeform')||'[]');arr.push({page:document.title.replace(' · Saigon Companion',''),friendLabel:FRIENDS[getFriend()],text:$('unexpectedText').value,savedAt:new Date().toISOString()});localStorage.setItem('moments_freeform',JSON.stringify(arr));closeUnexpectedModal();renderUnexpected();}
-function renderUnexpected(){const box=$('unexpectedTimeline');if(!box)return;const arr=JSON.parse(localStorage.getItem('moments_freeform')||'[]');box.innerHTML=arr.length?arr.map(e=>`<div class="moments-entry"><strong>✨ ${e.page}</strong><p>${e.friendLabel}</p><p>${e.text}</p></div>`).join(''):'<p>暫時未有 Moments。</p>'}
+function saveUnexpected(){const arr=JSON.parse(localStorage.getItem('moments_freeform')||'[]');arr.push({page:document.title.replace(' · '+((typeof TRIP_BRAND!=='undefined'&&TRIP_BRAND.browserTitleSuffix)||'Tokyo Onsen & Fuji Companion'),''),friendLabel:FRIENDS[getFriend()],text:$('unexpectedText').value,savedAt:new Date().toISOString()});localStorage.setItem('moments_freeform',JSON.stringify(arr));closeUnexpectedModal();renderUnexpected();}
+function renderUnexpected(){const box=$('unexpectedTimeline');if(!box)return;let arr=[];try{arr=JSON.parse(localStorage.getItem('moments_freeform')||'[]');if(!Array.isArray(arr))arr=[];}catch(e){arr=[];}box.innerHTML=arr.length?arr.map(e=>`<div class="moments-entry"><strong>✨ ${escapeHTML(e.page)}</strong><p>${escapeHTML(e.friendLabel)}</p><p>${escapeHTML(e.text)}</p></div>`).join(''):'<p>No Moments yet.</p>'}
 
 function updateExpenseMode(){
-  const personal = document.getElementById('expensePersonal')?.checked;
+  const personal = !!document.getElementById('expensePersonal')?.checked;
+  document.querySelectorAll('[data-expense-type]').forEach(btn=>btn.classList.toggle('active',btn.dataset.expenseType===(personal?'personal':'shared')));
   const splitBlock = document.getElementById('splitBetweenBlock');
-  const consumedBlock = document.getElementById('consumedByBlock');
+  const sharedPaid = document.getElementById('sharedPaidByBlock');
+  const personalPaid = document.getElementById('personalPaidForBlock');
   if(splitBlock) splitBlock.style.display = personal ? 'none' : 'block';
-  if(consumedBlock) consumedBlock.style.display = personal ? 'block' : 'none';
+  if(sharedPaid) sharedPaid.hidden = personal;
+  if(personalPaid) personalPaid.hidden = !personal;
   if(personal) syncConsumedIfAuto();
 }
+window.setExpenseType=function(type){
+  const personal=document.getElementById('expensePersonal');
+  if(personal) personal.checked=type==='personal';
+  updateExpenseMode();
+};
+window.setExpenseCategory=function(category){
+  const input=document.getElementById('expenseCategory');
+  if(input) input.value=category;
+  document.querySelectorAll('[data-category]').forEach(btn=>btn.classList.toggle('active',btn.dataset.category===category));
+};
 function syncConsumedIfAuto(){
-  const paid = document.getElementById('expensePaidBy');
+  const sharedPaid = document.getElementById('expensePaidBy');
+  const personalPaid = document.getElementById('expensePersonalPaidBy');
   const consumed = document.getElementById('expenseConsumedBy');
+  const personal=!!document.getElementById('expensePersonal')?.checked;
+  const paid=personal?personalPaid:sharedPaid;
   if(!paid || !consumed) return;
   if(consumed.dataset.manual !== 'true') consumed.value = paid.value;
 }
+window.syncPersonalPayer=function(){
+  const personalPaid=document.getElementById('expensePersonalPaidBy');
+  const sharedPaid=document.getElementById('expensePaidBy');
+  if(personalPaid&&sharedPaid) sharedPaid.value=personalPaid.value;
+  syncConsumedIfAuto();
+};
 function markConsumedManual(){
   const consumed = document.getElementById('expenseConsumedBy');
   if(consumed) consumed.dataset.manual = 'true';
@@ -157,7 +280,7 @@ function markConsumedManual(){
    Active Expenses API lives in the Stage 4F-Q single canonical module
    near the end of this file. Keep closeExpenseModal as a simple modal
    utility because HTML buttons call it directly. */
-function closeExpenseModal(){const m=$('expenseModal'); if(m) m.classList.remove('show')}
+function closeExpenseModal(){const m=$('expenseModal'); if(m) m.classList.remove('show'); if(typeof window.unlockExpensePage==='function') window.unlockExpensePage();}
 
 function saveChecklist(){const checks=[...document.querySelectorAll('[data-check]')].map(c=>c.checked);localStorage.setItem('checklist',JSON.stringify(checks));const ready=$('readyBox');if(ready)ready.classList.toggle('show',checks.length>0&&checks.every(Boolean)); renderDashboard();}
 function loadChecklist(){const stored=JSON.parse(localStorage.getItem('checklist')||'[]');document.querySelectorAll('[data-check]').forEach((c,i)=>c.checked=!!stored[i]);saveChecklist();}
@@ -173,7 +296,7 @@ function openTripCard(key) {
   const content = document.getElementById('tripModalContent');
   const modal = document.getElementById('tripModal');
   if (!content || !modal) return;
-  content.innerHTML = `<div class="trip-onepage"><p class="kicker">Trip</p><h2>${t.title}</h2>${t.body}<div class="guide-next-row"><button class="pill" onclick="openTripCard('${prev}')">‹ Previous</button><button class="pill" onclick="openTripCard('${next}')">Next ›</button></div><p class="timestamp">Build · Stage 4E-7 · HERO + LOGO SOURCE</p></div>`;
+  content.innerHTML = `<div class="trip-onepage"><p class="kicker">Trip</p><h2>${t.title}</h2>${t.body}<div class="guide-next-row"><button class="pill" onclick="openTripCard('${prev}')">‹ Previous</button><button class="pill" onclick="openTripCard('${next}')">Next ›</button></div><p class="timestamp">Build · Version ${(typeof TRIP_BRAND!=='undefined'&&TRIP_BRAND.version)||'0.6 RC11K'} · ${(typeof TRIP_BRAND!=='undefined'&&TRIP_BRAND.buildLabel)||'Phase 1 Release Candidate'}</p></div>`;
   modal.classList.add('show');
   const sheet=document.querySelector('#tripModal .trip-sheet');
   if(sheet) sheet.scrollTop=0;
@@ -186,16 +309,18 @@ function closeTripModal() {
 }
 
 function splitAll() {
-  document.querySelectorAll('#expenseModal input[data-split]').forEach(x => x.checked = true);
+  document.querySelectorAll('#expenseModal input[data-split]').forEach(x => x.checked = (x.value === 'crystal' || x.value === 'ava'));
+  if(typeof window.updateSplitUI==='function') window.updateSplitUI();
 }
 
 function clearAllSplit() {
   document.querySelectorAll('#expenseModal input[data-split]').forEach(x => x.checked = false);
+  if(typeof window.updateSplitUI==='function') window.updateSplitUI();
 }
 
 const MOODS=[
-  ["🤩","Wow"],["😋","Delicious"],["😵","Exhausted"],["🔥","正到爆"],
-  ["🤯","估你唔到"],["😶","Speechless"],["🥲","仆街了"],["🤬","Damn"]
+  ["🤩","Wow"],["😋","Delicious"],["😵","Exhausted"],["🔥","Amazing"],
+  ["🤯","Unexpected"],["😶","Speechless"],["🥲","Oh no"],["🤬","Damn"]
 ];
 let currentMood=[];
 let editingExpenseIndex=null;
@@ -206,7 +331,7 @@ function renderMoodButtons(selected=[]){
   if(!box) return;
   box.innerHTML=MOODS.map(([emoji,label])=>{
     const on=currentMood.includes(label);
-    return `<button type="button" class="mood-btn ${on?'active':''}" onclick="toggleMood('${label}')">${emoji} ${label}</button>`;
+    return `<button type="button" class="mood-btn ${on?'active':''}" aria-pressed="${on?'true':'false'}" onclick="toggleMood('${label}')">${emoji} ${label}</button>`;
   }).join('');
 }
 function toggleMood(label){
@@ -271,12 +396,35 @@ function renderPlacePage(key){
   const sig = (g.signature||g.highlights||[]).map(x=>`<li>${x}</li>`).join('');
   const worth = (g.worth||g.tips||[]).map(x=>`<li>${x}</li>`).join('');
   mount.innerHTML = `
+<button class="place-detail-close" type="button" aria-label="Close place detail" onclick="closePlaceDetail()">×</button>
 <div class="page-hero"><p class="kicker">Guide</p><h1>${g.emoji} ${g.title}</h1><p class="lead">${g.sub||''}</p></div>
 <section aria-label="Quick Info" class="quick-info-card">${quickInfoInnerHTML(g,key)}</section>
 <section class="prose-block guide-overview"><h2>Overview</h2><p>${g.desc||''}</p></section>
 <section class="prose-block"><h2>Highlights</h2><ul>${sig}</ul></section>
 <section class="prose-block"><h2>Good to Know</h2><ul>${worth}</ul></section>`;
-  document.title = `${g.title} · Saigon Companion`;
+  document.title = `${g.title} · ${(typeof TRIP_BRAND!=='undefined'&&TRIP_BRAND.browserTitleSuffix)||'Tokyo Onsen & Fuji Companion'}`;
+}
+
+function renderPlaceGroupPage(keys){
+  const clean=[...new Set((Array.isArray(keys)?keys:[]).filter(key=>key&&PLACES[key]))];
+  const mount=document.getElementById('placeMain');
+  if(!clean.length||!mount) return;
+  // Defensive auto-routing for old/shared links containing a single id.
+  if(clean.length===1){ renderPlacePage(clean[0]); return; }
+  const cards=clean.map((key,index)=>{
+    const g=PLACES[key];
+    const sig=(g.signature||g.highlights||[]).map(x=>`<li>${x}</li>`).join('');
+    const worth=(g.worth||g.tips||[]).map(x=>`<li>${x}</li>`).join('');
+    return `<article class="place-group-card" id="guide-${key}">
+      <div class="page-hero place-group-hero"><p class="kicker">Option ${index+1}</p><h1>${g.emoji} ${g.title}</h1><p class="lead">${g.sub||''}</p></div>
+      <section aria-label="Quick Info" class="quick-info-card">${quickInfoInnerHTML(g,key)}</section>
+      <section class="prose-block guide-overview"><h2>Overview</h2><p>${g.desc||''}</p></section>
+      <section class="prose-block"><h2>Highlights</h2><ul>${sig}</ul></section>
+      <section class="prose-block"><h2>Good to Know</h2><ul>${worth}</ul></section>
+    </article>`;
+  }).join('');
+  mount.innerHTML=`<button class="place-detail-close" type="button" aria-label="Close guide options" onclick="closePlaceDetail()">×</button><div class="page-hero"><p class="kicker">Guide</p><h1>Choose an option</h1><p class="lead">Compare the planned choices, then use Navigate inside the restaurant card you choose.</p></div>${cards}`;
+  document.title=`Guide options · ${(typeof TRIP_BRAND!=='undefined'&&TRIP_BRAND.browserTitleSuffix)||'Tokyo Onsen & Fuji Companion'}`;
 }
 
 function copyText(text){
@@ -287,18 +435,291 @@ function copyText(text){
 /* v3.2 P0 workflow fixes: append Moments, latest-first Expenses, save-and-stay expense tool */
 (function(){
   let editingMomentId = null;
+  let currentMomentPhoto = null;
+  let currentMomentContext = null;
+  let momentSelectorDay = '1';
+  let momentEntryIsPlanned = false; /* Stage 5B-2B2: true only while the composer was opened via the "Planned activity" landing card */
+  const prototypePhotoUrls = new Map();
   function readJson(key, fallback){try{return JSON.parse(localStorage.getItem(key)||JSON.stringify(fallback));}catch(e){return fallback;}}
   function writeJson(key, value){localStorage.setItem(key, JSON.stringify(value));}
+  function formatBytes(bytes){
+    if(!Number.isFinite(bytes)) return '';
+    if(bytes < 1024) return bytes + ' B';
+    if(bytes < 1024*1024) return (bytes/1024).toFixed(bytes < 10240 ? 1 : 0) + ' KB';
+    return (bytes/(1024*1024)).toFixed(1) + ' MB';
+  }
+  function clearMomentPhoto(revoke=true){
+    if(currentMomentPhoto?.url && revoke && ![...prototypePhotoUrls.values()].includes(currentMomentPhoto.url)){
+      try{ URL.revokeObjectURL(currentMomentPhoto.url); }catch(e){}
+    }
+    currentMomentPhoto = null;
+    const inputCamera=document.getElementById('momentsPhotoCamera');
+    const inputLibrary=document.getElementById('momentsPhotoLibrary');
+    if(inputCamera) inputCamera.value='';
+    if(inputLibrary) inputLibrary.value='';
+    renderMomentPhotoPreview();
+  }
+  function renderMomentPhotoPreview(){
+    const preview=document.getElementById('momentsPhotoPreview');
+    if(!preview) return;
+    if(!currentMomentPhoto){
+      preview.hidden=true;
+      preview.innerHTML='';
+      return;
+    }
+    const meta=currentMomentPhoto.meta||{};
+    preview.hidden=false;
+    preview.innerHTML=`<div class="photo-prototype-card">
+      <img src="${currentMomentPhoto.url}" alt="Compressed moment preview"/>
+      <div class="photo-prototype-copy"><strong>✨ Looking good!</strong><span>${meta.width||'?'} × ${meta.height||'?'} · ${formatBytes(meta.bytes)}</span><small>${meta.originalBytes ? `Original ${formatBytes(meta.originalBytes)} → ` : ''}Compressed preview · local prototype</small></div>
+      <button type="button" class="photo-remove" onclick="removeMomentPhoto()" aria-label="Remove photo">×</button>
+    </div>`;
+  }
+  function loadImageFromFile(file){
+    return new Promise((resolve,reject)=>{
+      const url=URL.createObjectURL(file);
+      const img=new Image();
+      img.onload=()=>{URL.revokeObjectURL(url);resolve(img);};
+      img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('Could not read this photo.'));};
+      img.src=url;
+    });
+  }
+  function canvasToBlob(canvas,type,quality){
+    return new Promise(resolve=>canvas.toBlob(resolve,type,quality));
+  }
+  async function compressMomentPhoto(file){
+    if(!file || !file.type.startsWith('image/')) throw new Error('Please choose a photo.');
+    const img=await loadImageFromFile(file);
+    const maxEdge=1600;
+    const scale=Math.min(1,maxEdge/Math.max(img.naturalWidth,img.naturalHeight));
+    const width=Math.max(1,Math.round(img.naturalWidth*scale));
+    const height=Math.max(1,Math.round(img.naturalHeight*scale));
+    const canvas=document.createElement('canvas');
+    canvas.width=width; canvas.height=height;
+    const ctx=canvas.getContext('2d',{alpha:false});
+    ctx.fillStyle='#fff'; ctx.fillRect(0,0,width,height);
+    ctx.drawImage(img,0,0,width,height);
+    let type='image/webp', quality=.75;
+    let blob=await canvasToBlob(canvas,type,quality);
+    if(!blob){ type='image/jpeg'; quality=.82; blob=await canvasToBlob(canvas,type,quality); }
+    for(const q of [.68,.60,.52]){
+      if(blob && blob.size<=500*1024) break;
+      const next=await canvasToBlob(canvas,type,q);
+      if(next) blob=next;
+    }
+    if(!blob) throw new Error('Photo compression failed. Please try another photo.');
+    return {blob,url:URL.createObjectURL(blob),meta:{name:file.name||'camera-photo',bytes:blob.size,width,height,type:blob.type,originalBytes:file.size||0}};
+  }
+  async function handleMomentPhotoFile(file){
+    const zone=document.querySelector('#momentsModal .photo-capture-zone');
+    if(zone) zone.classList.add('is-processing');
+    try{
+      const processed=await compressMomentPhoto(file);
+      clearMomentPhoto(true);
+      currentMomentPhoto=processed;
+      renderMomentPhotoPreview();
+    }catch(err){
+      alert(err?.message||'Unable to prepare this photo.');
+    }finally{
+      if(zone) zone.classList.remove('is-processing');
+      queueAppNavSync();
+    }
+  }
+  function stabiliseAppNavAfterViewportChange(){
+    const nav=document.querySelector('.app-nav');
+    if(!nav) return;
+    nav.classList.add('app-nav--layout-sync');
+    void nav.offsetHeight;
+    requestAnimationFrame(()=>requestAnimationFrame(()=>nav.classList.remove('app-nav--layout-sync')));
+  }
+  let appNavSyncTimer=0;
+  function queueAppNavSync(){
+    clearTimeout(appNavSyncTimer);
+    appNavSyncTimer=setTimeout(stabiliseAppNavAfterViewportChange,80);
+  }
+  window.addEventListener('focus',queueAppNavSync);
+  window.addEventListener('pageshow',queueAppNavSync);
+  if(window.visualViewport){
+    window.visualViewport.addEventListener('resize',queueAppNavSync);
+    window.visualViewport.addEventListener('scroll',queueAppNavSync);
+  }
+  window.removeMomentPhoto=function(){ clearMomentPhoto(true); };
+  function normaliseDayId(value){
+    if(value == null) return null;
+    const raw=String(value);
+    if(/^day[1-5]$/.test(raw)) return raw;
+    if(/^[1-5]$/.test(raw)) return 'day'+raw;
+    return null;
+  }
+  function dayNumberFromId(dayId){
+    const match=String(dayId||'').match(/day([1-5])/);
+    return match ? match[1] : null;
+  }
+  function itineraryItems(){
+    const out=[];
+    Object.entries((typeof ITINERARY_DATA!=='undefined'&&ITINERARY_DATA)||{}).forEach(([dayNumber,day])=>{
+      (day?.items||[]).forEach(item=>out.push({...item,_dayNumber:String(dayNumber),dayId:normaliseDayId(item.dayId)||('day'+dayNumber)}));
+    });
+    return out;
+  }
+  function stripMomentTitle(title){
+    return String(title||'Moment').replace(/^[^\p{L}\p{N}]+/u,'').trim() || 'Moment';
+  }
+  function guideCandidates(placeKey){
+    const links=(typeof DAY_LINKS!=='undefined'&&DAY_LINKS[placeKey])||[];
+    return links.map(link=>{
+      const href=Array.isArray(link)?link[1]:'';
+      const dayMatch=String(href||'').match(/[?&]day=([1-5])/);
+      const idMatch=String(href||'').match(/#([^#?&]+)/);
+      if(!dayMatch||!idMatch) return null;
+      const item=itineraryItems().find(x=>x._dayNumber===dayMatch[1]&&x.id===decodeURIComponent(idMatch[1]));
+      return item||null;
+    }).filter(Boolean);
+  }
+  function momentEntrySource(){
+    const guideModalOpen=document.getElementById('guideModal')?.classList.contains('show');
+    const path=(location.pathname||'').split('/').pop();
+    if(guideModalOpen || path==='guide.html' || path==='place.html' || document.getElementById('placeMain')) return 'guide';
+    if(path==='day.html') return 'days';
+    return 'unknown';
+  }
+  function resolveMomentContext(key, sourceHint){
+    const raw=key||'general';
+    if(raw==='general') return {contextType:'custom',placeKey:null,activityId:null,dayId:null,displayTitleSnapshot:'Just this moment'};
+    const source=sourceHint||momentEntrySource();
+    if(source==='guide' && typeof PLACES!=='undefined' && PLACES[raw]){
+      const candidates=guideCandidates(raw);
+      const unique=new Map(candidates.map(x=>[x.dayId+'|'+x.id,x]));
+      const only=unique.size===1?[...unique.values()][0]:null;
+      return {contextType:'guide',placeKey:raw,activityId:only?.id||null,dayId:only?.dayId||null,displayTitleSnapshot:PLACES[raw].title||'Moment'};
+    }
+    const item=itineraryItems().find(x=>x.id===raw);
+    if(item){
+      return {contextType:'days',placeKey:item.placeId||null,activityId:item.id,dayId:item.dayId,displayTitleSnapshot:stripMomentTitle(item.title)};
+    }
+    if(typeof PLACES!=='undefined'&&PLACES[raw]){
+      const candidates=guideCandidates(raw);
+      const unique=new Map(candidates.map(x=>[x.dayId+'|'+x.id,x]));
+      const only=unique.size===1?[...unique.values()][0]:null;
+      return {contextType:'guide',placeKey:raw,activityId:only?.id||null,dayId:only?.dayId||null,displayTitleSnapshot:PLACES[raw].title||'Moment'};
+    }
+    return {contextType:'custom',placeKey:null,activityId:null,dayId:null,displayTitleSnapshot:'Just this moment'};
+  }
+  function plannedMomentContext(dayNumber,item){
+    return {contextType:'planned-activity',placeKey:item.placeId||null,activityId:item.id,dayId:normaliseDayId(item.dayId)||('day'+dayNumber),displayTitleSnapshot:stripMomentTitle(item.title)};
+  }
+  function suggestedMomentDay(){
+    return String(tripDayNumber());
+  }
+  function renderMomentContextSummary(){
+    const box=document.getElementById('momentContextSummary');
+    if(!box) return;
+    const c=currentMomentContext||resolveMomentContext('general');
+    if(c.contextType==='custom'){
+      box.hidden=true;
+      box.innerHTML='';
+      box.closest('.moment-context-panel')?.classList.add('is-custom');
+    } else {
+      box.hidden=false;
+      box.closest('.moment-context-panel')?.classList.remove('is-custom');
+      box.innerHTML=`<span class="moment-context-dot">✓</span><span><strong>${c.displayTitleSnapshot}</strong><small>${c.dayId ? `Day ${dayNumberFromId(c.dayId)} · ` : ''}${c.contextType==='guide'?'From Guide':'Planned activity'}</small></span>`;
+    }
+  }
+  function renderPlannedActivityPicker(){
+    const host=document.getElementById('momentPlannedPicker');
+    if(!host) return;
+    const day=(typeof ITINERARY_DATA!=='undefined'?ITINERARY_DATA:null)?.[momentSelectorDay];
+    const chips=(day?.items||[]).map(item=>`<button type="button" class="moment-activity-chip" onclick="chooseMomentActivity('${momentSelectorDay}','${String(item.id).replace(/'/g,"\'")}')"><span>${stripMomentTitle(item.title)}</span><small>${item.time||''}</small></button>`).join('');
+    /* Stage 5B-2B2: the "Just this moment" chip is redundant when the composer was entered via the
+       Planned activity card — returning to free capture is done by closing the composer and choosing
+       the other card instead. Only render the chip for the general-entry "+Add planned activity" path. */
+    const customChoiceHTML=momentEntryIsPlanned ? '' : `<button type="button" class="moment-custom-choice" onclick="clearMomentActivity()">✨ Just this moment</button>`;
+    host.innerHTML=`${customChoiceHTML}<div class="moment-day-tabs">${['1','2','3','4','5'].map(n=>`<button type="button" class="moment-day-tab ${n===momentSelectorDay?'active':''}" onclick="setMomentSelectorDay('${n}')">Day ${n}</button>`).join('')}</div><div class="moment-activity-grid">${chips}</div>`;
+  }
+  function ensureMomentContextUI(){
+    const form=document.querySelector('#momentsModal .moments-form');
+    if(!form||form.querySelector('.moment-context-panel')) return;
+    const panel=document.createElement('div');
+    panel.className='moment-context-panel';
+    panel.innerHTML=`<div id="momentContextSummary" class="moment-context-summary"></div><button type="button" id="momentPlannedToggle" class="moment-planned-toggle" onclick="toggleMomentPlannedPicker()">＋ Add planned activity</button><div id="momentPlannedPicker" class="moment-planned-picker" hidden></div>`;
+    form.insertBefore(panel,form.firstChild);
+  }
+  window.toggleMomentPlannedPicker=function(){
+    const picker=document.getElementById('momentPlannedPicker');
+    const toggle=document.getElementById('momentPlannedToggle');
+    if(!picker) return;
+    picker.hidden=!picker.hidden;
+    if(!picker.hidden){ renderPlannedActivityPicker(); if(toggle) toggle.textContent='− Hide planned activities'; }
+    else if(toggle) toggle.textContent=currentMomentContext?.contextType==='custom'?'＋ Add planned activity':'Change planned activity';
+  };
+  window.openPlannedMomentCapture=function(){
+    window.openMomentsModal('general');
+    momentEntryIsPlanned=true;
+    momentSelectorDay=suggestedMomentDay();
+    const picker=document.getElementById('momentPlannedPicker');
+    const toggle=document.getElementById('momentPlannedToggle');
+    if(picker){
+      picker.hidden=false;
+      renderPlannedActivityPicker();
+    }
+    if(toggle) toggle.textContent='− Hide planned activities';
+  };
+  window.setMomentSelectorDay=function(dayNumber){ momentSelectorDay=String(dayNumber); renderPlannedActivityPicker(); };
+  window.chooseMomentActivity=function(dayNumber,activityId){
+    const item=((typeof ITINERARY_DATA!=='undefined'?ITINERARY_DATA:null)?.[String(dayNumber)]?.items||[]).find(x=>x.id===activityId);
+    if(!item) return;
+    currentMomentKey=item.id;
+    currentMomentContext=plannedMomentContext(String(dayNumber),item);
+    const title=document.getElementById('momentsTitle');
+    if(title) title.textContent=currentMomentContext.displayTitleSnapshot;
+    renderMomentContextSummary();
+    const picker=document.getElementById('momentPlannedPicker');
+    const toggle=document.getElementById('momentPlannedToggle');
+    if(picker) picker.hidden=true;
+    if(toggle) toggle.textContent='Change planned activity';
+  };
+  window.clearMomentActivity=function(){
+    currentMomentKey='general';
+    currentMomentContext=resolveMomentContext('general');
+    const title=document.getElementById('momentsTitle'); if(title) title.textContent='Just this moment';
+    renderMomentContextSummary();
+    const picker=document.getElementById('momentPlannedPicker'); if(picker) picker.hidden=true;
+    const toggle=document.getElementById('momentPlannedToggle'); if(toggle) toggle.textContent='＋ Add planned activity';
+  };
+  function enhanceMomentPhotoInput(){
+    document.querySelectorAll('#momentsModal .photo-input').forEach(host=>{
+      if(host.dataset.photoEnhanced==='true') return;
+      host.dataset.photoEnhanced='true';
+      host.classList.add('photo-capture-zone');
+      host.innerHTML=`<div class="photo-capture-heading"><span class="photo-capture-spark">📸</span><span><strong>Add a happy snap</strong><small>We compress it before anything is saved.</small></span></div>
+        <div class="photo-capture-actions">
+          <label class="photo-capture-btn photo-capture-btn--camera">📷 Take Photo<input id="momentsPhotoCamera" type="file" accept="image/*" capture="environment" hidden></label>
+          <label class="photo-capture-btn">🖼 Choose Photo<input id="momentsPhotoLibrary" type="file" accept="image/*" hidden></label>
+        </div>
+        <div id="momentsPhotoPreview" class="photo-prototype-preview" hidden></div>`;
+      host.querySelectorAll('input[type=file]').forEach(input=>input.addEventListener('change',e=>{
+        const file=e.target.files?.[0]; if(file) handleMomentPhotoFile(file);
+      }));
+    });
+  }
   window.openMomentsModal = function(key){
     editingMomentId = null;
+    momentEntryIsPlanned = false; /* Stage 5B-2B2: only openPlannedMomentCapture re-enables planned-entry mode, right after this call */
     currentMomentKey = key || 'general';
-    const g = PLACES[currentMomentKey] || PLACES.general || {title:'Moment'};
+    currentMomentContext = resolveMomentContext(currentMomentKey);
+    momentSelectorDay = dayNumberFromId(currentMomentContext.dayId) || suggestedMomentDay();
+    const g = PLACES[currentMomentContext.placeKey||currentMomentKey] || PLACES.general || {title:'Moment'};
     const title = document.getElementById('momentsTitle');
     const friend = document.getElementById('momentsFriend');
     const text = document.getElementById('momentsText');
-    if(title) title.textContent = g.title || 'Moment';
+    if(title) title.textContent = currentMomentContext.displayTitleSnapshot || g.title || 'Moment';
     if(friend) friend.textContent = FRIENDS[getFriend()];
     if(text) text.value = '';
+    ensureMomentContextUI();
+    renderMomentContextSummary();
+    const picker=document.getElementById('momentPlannedPicker'); if(picker) picker.hidden=true;
+    const toggle=document.getElementById('momentPlannedToggle'); if(toggle) toggle.textContent=currentMomentContext.contextType==='custom'?'＋ Add planned activity':'Change planned activity';
+    clearMomentPhoto(true);
     setStars(0);
     renderMoodButtons([]);
     const save=document.querySelector('#momentsModal .moments-form .btn');
@@ -317,22 +738,29 @@ function copyText(text){
     let entry={
       id:editingMomentId || ('m_'+Date.now()+'_'+Math.random().toString(36).slice(2,7)),
       itemKey:key,
-      itemTitle:g.title || 'Moment',
+      itemTitle:currentMomentContext?.displayTitleSnapshot || g.title || 'Moment',
+      context:{...(currentMomentContext||resolveMomentContext(key))},
       friendLabel:FRIENDS[getFriend()],
       rating:Number(ratingEl?.value||0),
       moods:(currentMood||[]).slice(),
       text:textEl?.value||'',
+      photoPrototype:currentMomentPhoto ? {...currentMomentPhoto.meta, retained:false} : null,
       createdAt:now
     };
     if(editingMomentId){
+      const existing=arr.find(e=>e.id===editingMomentId);
+      if(!currentMomentPhoto && existing?.photoPrototype) entry.photoPrototype=existing.photoPrototype;
       arr=arr.map(e=> e.id===editingMomentId ? {...e,...entry,createdAt:e.createdAt||now,editedAt:now} : e);
     }else{
       arr.push(entry);
     }
+    if(currentMomentPhoto?.url) prototypePhotoUrls.set(entry.id,currentMomentPhoto.url);
     writeJson('moments_list',arr);
     localStorage.setItem('moment_latest_'+key, JSON.stringify(entry));
     editingMomentId=null;
     if(textEl) textEl.value='';
+    currentMomentPhoto=null;
+    renderMomentPhotoPreview();
     setStars(0); renderMoodButtons([]);
     const save=document.querySelector('#momentsModal .moments-form .btn');
     if(save) save.textContent='Save';
@@ -343,13 +771,26 @@ function copyText(text){
     const e=arr.find(x=>x.id===id);
     if(!e) return;
     editingMomentId=id;
+    momentEntryIsPlanned = false; /* Stage 5B-2B2: editing an existing moment always keeps the full planned-activity picker */
     currentMomentKey=e.itemKey || 'general';
+    currentMomentContext=e.context ? {...e.context} : resolveMomentContext(currentMomentKey);
+    momentSelectorDay=dayNumberFromId(currentMomentContext.dayId)||suggestedMomentDay();
+    ensureMomentContextUI();
+    renderMomentContextSummary();
+    const picker=document.getElementById('momentPlannedPicker'); if(picker) picker.hidden=true;
+    const toggle=document.getElementById('momentPlannedToggle'); if(toggle) toggle.textContent=currentMomentContext.contextType==='custom'?'＋ Add planned activity':'Change planned activity';
     const title=document.getElementById('momentsTitle');
     const friend=document.getElementById('momentsFriend');
     const text=document.getElementById('momentsText');
-    if(title) title.textContent=e.itemTitle || 'Moment';
+    if(title) title.textContent=e.context?.displayTitleSnapshot || e.itemTitle || 'Moment';
     if(friend) friend.textContent=e.friendLabel || FRIENDS[getFriend()];
     if(text) text.value=e.text || '';
+    clearMomentPhoto(true);
+    const rememberedUrl=prototypePhotoUrls.get(e.id);
+    if(rememberedUrl && e.photoPrototype){
+      currentMomentPhoto={url:rememberedUrl,meta:e.photoPrototype};
+      renderMomentPhotoPreview();
+    }
     setStars(e.rating||0);
     renderMoodButtons(e.moods||[]);
     const save=document.querySelector('#momentsModal .moments-form .btn');
@@ -364,6 +805,8 @@ function copyText(text){
     arr=arr.filter(e=>e.id!==idOrKey);
     writeJson('moments_list',arr);
     if(before===arr.length && idOrKey && !idOrKey.startsWith('m_')) localStorage.removeItem('moment_'+idOrKey);
+    const photoUrl=prototypePhotoUrls.get(idOrKey);
+    if(photoUrl){try{URL.revokeObjectURL(photoUrl);}catch(e){} prototypePhotoUrls.delete(idOrKey);}
     renderMoments();
   };
   window.renderMoments = function(){
@@ -382,13 +825,16 @@ function copyText(text){
       }
     }
     arr.sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
-    if(!arr.length){box.innerHTML='<p>暫時未有 Moments。</p>';return;}
+    if(!arr.length){box.innerHTML='<p>No Moments yet.</p>';return;}
     box.innerHTML=arr.map(e=>`<div class="moments-entry">
-      <strong>${e.itemTitle||'Moment'}</strong>
-      <p class="timestamp">${e.friendLabel||''} · ${formatTime(e.createdAt)}${e.editedAt?` · Edited ${formatTime(e.editedAt)}`:''}</p>
+      <strong>${escapeHTML(e.itemTitle||'Moment')}</strong>
+      <p class="timestamp">${escapeHTML(e.friendLabel||'')} · ${formatTime(e.createdAt)}${e.editedAt?` · Edited ${formatTime(e.editedAt)}`:''}</p>
+      ${e.photoPrototype ? (prototypePhotoUrls.get(e.id)
+        ? `<img class="moment-prototype-photo" src="${prototypePhotoUrls.get(e.id)}" alt="Moment photo preview">`
+        : `<p class="moment-photo-note">📸 Photo tested · preview was intentionally not kept after reload</p>`) : ''}
       <p class="moment-mood">${moodLabel(e.moods||[])}</p>
       <p class="moment-stars">${'⭐'.repeat(e.rating||0)}</p>
-      <p class="moment-copy">${e.text||''}</p>
+      <p class="moment-copy">${escapeHTML(e.text||'')}</p>
       <div class="entry-actions"><button class="mini-btn" onclick="editMoment('${e.id||e.itemKey}')">✏️ Edit</button><button class="mini-btn" onclick="deleteMoment('${e.id||e.itemKey}')">🗑 Delete</button></div>
     </div>`).join('');
   };
@@ -400,15 +846,15 @@ function copyText(text){
     const latest=arr.map((e,i)=>({...e,_idx:i})).sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||''))).slice(0,3);
     if(!latest.length){box.innerHTML='<p class="timestamp">No transactions yet.</p>';return;}
     box.innerHTML=latest.map(e=>`<div class="expense-card">
-      <strong>${e.item}</strong>
+      <strong>${escapeHTML(e.item)}</strong>
       <p class="timestamp">${formatTime(e.createdAt)}</p>
-      <p>${Number(e.total).toLocaleString()} VND · Paid by ${FRIENDS[e.paidBy]}</p>
+      <p>${Number(e.total).toLocaleString()} JPY · Paid by ${FRIENDS[e.paidBy]}</p>
       <div class="entry-actions"><button class="mini-btn" onclick="editExpense(${e._idx})">✏️ Edit</button><button class="mini-btn" onclick="deleteExpense(${e._idx})">🗑 Delete</button></div>
     </div>`).join('');
   };
   /* Stage 4C-6: removed legacy v3.2 window.renderExpenses; canonical handler is later in this file. */
 
-  document.addEventListener('DOMContentLoaded',()=>{renderMoodButtons([]);renderMoments();renderExpenses();});
+  document.addEventListener('DOMContentLoaded',()=>{enhanceMomentPhotoInput();renderMoodButtons([]);renderMoments();renderExpenses();});
 })();
 
 /* Stage 4C-6: legacy v3.4 Expenses wrappers removed; Stage 4F-Q owns the single canonical Expenses module. */
@@ -428,8 +874,8 @@ document.addEventListener('DOMContentLoaded',()=>{
         el.textContent='💰 What did we spend?';
       }
     });
-    const title=document.getElementById('expenseModalTitle'); if(title) title.textContent='💰 What did we spend?';
-    const intro=document.getElementById('expenseIntro'); if(intro) intro.textContent='記低每一筆公數或個人消費，系統會自動計 Personal Spend 同 Settlement。';
+    const title=document.getElementById('expenseModalTitle'); if(title) title.textContent='Add expense';
+    const intro=document.getElementById('expenseIntro'); if(intro) intro.textContent='Record each shared or personal expense. Personal Spend and Settlement update automatically.';
     const save=document.getElementById('expenseSaveButton'); if(save) save.textContent='Save';
   }
   document.addEventListener('DOMContentLoaded',polishExpenseCopy);
@@ -446,12 +892,12 @@ document.addEventListener('DOMContentLoaded',()=>{
 (function(){
   const DEFAULT_FRIEND = 'crystal';
   function currentUser(){
-    try { return (typeof getFriend === 'function' ? getFriend() : localStorage.getItem('saigon_friend')) || DEFAULT_FRIEND; }
+    try { return (typeof getFriend === 'function' ? getFriend() : localStorage.getItem('nz_friend')) || DEFAULT_FRIEND; }
     catch(e){ return DEFAULT_FRIEND; }
   }
   function friendLabel(k){
-    try { return (typeof FRIENDS !== 'undefined' && FRIENDS[k]) ? FRIENDS[k] : (FRIENDS?.[DEFAULT_FRIEND] || '👓 Crystal'); }
-    catch(e){ return '👓 Crystal'; }
+    try { return (typeof FRIENDS !== 'undefined' && FRIENDS[k]) ? FRIENDS[k] : (FRIENDS?.[DEFAULT_FRIEND] || '✨ Crystal'); }
+    catch(e){ return '✨ Crystal'; }
   }
   function simplifyMomentsAuthor(){
     const row=document.querySelector('#momentsModal p:has(#momentsFriend)');
@@ -525,11 +971,11 @@ function getBookingStatusLabel(status){
    are unchanged from the deploy-tested Stage 4F-P baseline.
    ============================================================================ */
 (function(){
-  const FRIEND_ORDER=['christal','crystal','mero','vivian'];
-  const FRIEND_FALLBACK={christal:'🧸 Christal',crystal:'👓 Crystal',mero:'✝️ Mero',vivian:'👟 Vivian'};
+  const FRIEND_ORDER=['crystal','ava','mum'];
+  const FRIEND_FALLBACK={crystal:'✨ Crystal',ava:'🌸 Ava',mum:'🎂 Mum'};
 
   function currentUser(){
-    try{return (typeof getFriend==='function' ? getFriend() : localStorage.getItem('saigon_friend')) || 'crystal';}
+    try{return (typeof getFriend==='function' ? getFriend() : localStorage.getItem('tokyo_friend')) || 'crystal';}
     catch(e){return 'crystal';}
   }
   function labelFor(k){
@@ -565,30 +1011,170 @@ function getBookingStatusLabel(status){
   function ensurePaidByUI(){
     const select=document.getElementById('expensePaidBy');
     if(!select) return;
-    if(!document.getElementById('paidByDisplay')){
-      select.classList.add('paid-by-hidden-select');
-      select.setAttribute('aria-hidden','true');
-      select.tabIndex=-1;
-      const panel=document.createElement('div');
-      panel.className='paid-by-panel';
-      panel.innerHTML=`<div class="paid-by-display" id="paidByDisplay"><span class="paid-by-current" id="paidByDisplayName">${labelFor(select.value||currentUser())}</span><button type="button" class="paid-by-change" id="paidByChangeButton">Change</button></div><div class="paid-by-choices" id="paidByChoices" hidden>${FRIEND_ORDER.map(k=>`<button type="button" data-friend="${k}">${labelFor(k)}</button>`).join('')}</div>`;
-      select.insertAdjacentElement('afterend',panel);
-      panel.querySelector('#paidByChangeButton')?.addEventListener('click',()=>{
-        const choices=panel.querySelector('#paidByChoices'); if(choices) choices.hidden=!choices.hidden;
-        updatePaidByDisplay();
-      });
-      panel.querySelectorAll('#paidByChoices button').forEach(btn=>{
-        btn.addEventListener('click',()=>{
-          setSelectValue('expensePaidBy',btn.dataset.friend);
-          try{if(typeof syncConsumedIfAuto==='function') syncConsumedIfAuto();}catch(e){}
-          const choices=panel.querySelector('#paidByChoices'); if(choices) choices.hidden=true;
-          updatePaidByDisplay();
-        });
-      });
-      select.addEventListener('change',updatePaidByDisplay);
-    }
-    updatePaidByDisplay();
+    document.getElementById('paidByDisplay')?.closest('.paid-by-panel')?.remove();
+    select.classList.remove('paid-by-hidden-select');
+    select.removeAttribute('aria-hidden');
+    select.tabIndex=0;
   }
+  let expenseSplitMode='equal';
+  let calculatorTargetId='expenseTotal';
+  let calculatorExpression='';
+
+  function selectedSplitParties(){
+    return [...document.querySelectorAll('#expenseModal input[data-split]:checked')].map(x=>x.value);
+  }
+  function expenseTotalValue(){
+    return Number(String(document.getElementById('expenseTotal')?.value||'').replace(/[^0-9.]/g,''))||0;
+  }
+  function setExportVisibility(){
+    const btn=document.getElementById('expenseExportButton');
+    if(btn) btn.hidden=currentUser()!=='crystal';
+  }
+  window.refreshExpenseAdminUI=setExportVisibility;
+  function splitSharesForExpense(e){
+    const amount=Number(e.total||0);
+    if(e.type==='personal'){
+      const who=e.consumedBy || ((e.split||[])[0]) || e.paidBy;
+      return {[who]:amount};
+    }
+    if(e.shares && typeof e.shares==='object') return e.shares;
+    const split=(e.split&&e.split.length)?e.split:[e.paidBy];
+    const share=split.length?amount/split.length:amount;
+    return Object.fromEntries(split.map(k=>[k,share]));
+  }
+  function calculatorIcon(){
+    return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2h12a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm0 2v4h12V4H6Zm2 7H6v2h2v-2Zm5 0h-2v2h2v-2Zm5 0h-2v2h2v-2ZM8 16H6v2h2v-2Zm5 0h-2v2h2v-2Zm5 0h-2v2h2v-2Z"/></svg>`;
+  }
+  function renderCustomSplitPanel(){
+    const panel=document.getElementById('customSplitPanel');
+    if(!panel) return;
+    const parties=selectedSplitParties();
+    panel.hidden=expenseSplitMode!=='custom';
+    if(panel.hidden){panel.innerHTML='';return;}
+    if(!parties.length){panel.innerHTML='<p class="split-helper">Choose at least one party.</p>';return;}
+    const previous={};
+    panel.querySelectorAll('input[data-custom-party]').forEach(i=>previous[i.dataset.customParty]=i.value);
+    panel.innerHTML=parties.map(k=>`<label class="custom-split-row"><span>${labelFor(k)}</span><div class="expense-money-field"><input id="customShare_${k}" data-custom-party="${k}" inputmode="decimal" type="text" value="${previous[k]??''}" placeholder="0.00" oninput="recalculateCustomSplit()" onblur="autofillCustomRemainderOnExit('${k}')"/><button class="field-clear-btn" type="button" onclick="clearExpenseField('customShare_${k}')" aria-label="Clear ${labelFor(k)} amount">Clear</button><button class="calc-open-btn remainder-btn" type="button" onclick="calculateCustomRemainder('${k}')" aria-label="Calculate remainder for ${labelFor(k)}">${calculatorIcon()}</button></div></label>`).join('')+`<p class="split-helper" id="customSplitStatus">Enter two amounts, then move to the remaining field to fill the balance automatically.</p>`;
+    window.recalculateCustomSplit();
+  }
+  window.calculateCustomRemainder=function(targetParty){
+    const total=expenseTotalValue();
+    const parties=selectedSplitParties();
+    if(!total) return alert('Enter the total amount first.');
+    if(!parties.includes(targetParty)) return;
+    let used=0;
+    for(const party of parties){
+      if(party===targetParty) continue;
+      const raw=document.getElementById(`customShare_${party}`)?.value;
+      if(raw==='' || raw==null) return alert('Fill the other selected amounts first.');
+      used+=Number(raw)||0;
+    }
+    const remainder=total-used;
+    if(remainder<0) return alert(`The other amounts exceed the total by ${Math.abs(remainder).toFixed(2)} JPY.`);
+    const input=document.getElementById(`customShare_${targetParty}`);
+    if(input){input.value=remainder.toFixed(2);input.dispatchEvent(new Event('input',{bubbles:true}));}
+  };
+  window.autofillCustomRemainderOnExit=function(sourceParty){
+    const panel=document.getElementById('customSplitPanel');
+    if(!panel || expenseSplitMode!=='custom') return;
+    const inputs=[...panel.querySelectorAll('input[data-custom-party]')];
+    const total=expenseTotalValue();
+    const blanks=inputs.filter(i=>String(i.value||'').trim()==='');
+    const filled=inputs.filter(i=>String(i.value||'').trim()!=='');
+    if(total>0 && inputs.length>1 && blanks.length===1 && filled.length===inputs.length-1){
+      const used=filled.reduce((sum,i)=>sum+(Number(i.value)||0),0);
+      const remainder=total-used;
+      if(remainder>=0) blanks[0].value=remainder.toFixed(2);
+    }
+    window.recalculateCustomSplit();
+  };
+  window.clearExpenseField=function(id){
+    const input=document.getElementById(id);
+    if(!input) return;
+    input.value='';
+    input.dispatchEvent(new Event('input',{bubbles:true}));
+    input.focus({preventScroll:true});
+  };
+  window.recalculateCustomSplit=function(){
+    const panel=document.getElementById('customSplitPanel');
+    if(!panel || expenseSplitMode!=='custom') return;
+    const inputs=[...panel.querySelectorAll('input[data-custom-party]')];
+    const total=expenseTotalValue();
+    const allocated=inputs.reduce((sum,i)=>sum+(Number(i.value)||0),0);
+    const difference=total-allocated;
+    const status=document.getElementById('customSplitStatus');
+    if(status){
+      if(!total) status.textContent='Enter the total amount first.';
+      else if(Math.abs(difference)<=0.01) status.textContent='Custom split matches the total.';
+      else if(difference>0) status.textContent=`${difference.toFixed(2)} JPY remains unallocated.`;
+      else status.textContent=`Over by ${Math.abs(difference).toFixed(2)} JPY.`;
+      status.classList.toggle('error',difference<-.01);
+      status.classList.toggle('complete',Math.abs(difference)<=.01 && total>0);
+    }
+  };
+  window.updateSplitUI=function(){
+    document.querySelectorAll('[data-split-mode]').forEach(btn=>btn.classList.toggle('active',btn.dataset.splitMode===expenseSplitMode));
+    const selected=[...document.querySelectorAll('#expenseModal input[data-split]:checked')].map(input=>input.value);
+    const summary=document.getElementById('splitPickerSummary');
+    if(summary){
+      const names={crystal:'Crystal',ava:'Ava',mum:'Mum'};
+      summary.textContent=selected.length===3?'All':selected.length===0?'None':selected.map(key=>names[key]||key).join(' + ');
+    }
+    renderCustomSplitPanel();
+  };
+  window.toggleSplitPicker=function(event){
+    if(event) event.stopPropagation();
+    const menu=document.getElementById('splitPickerMenu');
+    const button=document.getElementById('splitPickerButton');
+    if(!menu||!button) return;
+    const opening=menu.hidden;
+    menu.hidden=!opening;
+    button.setAttribute('aria-expanded',opening?'true':'false');
+  };
+  window.closeSplitPicker=function(){
+    const menu=document.getElementById('splitPickerMenu');
+    const button=document.getElementById('splitPickerButton');
+    if(menu) menu.hidden=true;
+    if(button) button.setAttribute('aria-expanded','false');
+  };
+  document.addEventListener('click',window.closeSplitPicker);
+  window.setExpenseSplitMode=function(mode){
+    expenseSplitMode=mode==='custom'?'custom':'equal';
+    window.updateSplitUI();
+  };
+  window.openExpenseCalculator=function(targetId){
+    calculatorTargetId=targetId||'expenseTotal';
+    const target=document.getElementById(calculatorTargetId);
+    calculatorExpression=String(target?.value||'').replace(/[^0-9.+\-*/()]/g,'');
+    const display=document.getElementById('expenseCalculatorDisplay');
+    if(display) display.textContent=calculatorExpression||'0';
+    document.getElementById('expenseCalculatorModal')?.classList.add('show');
+  };
+  window.closeExpenseCalculator=function(){document.getElementById('expenseCalculatorModal')?.classList.remove('show');};
+  function safeEvaluateExpression(expr){
+    if(!expr || !/^[0-9.+\-*/()\s]+$/.test(expr)) throw new Error('Invalid');
+    const value=Function(`"use strict";return (${expr})`)();
+    if(!Number.isFinite(value)) throw new Error('Invalid');
+    return value;
+  }
+  window.calcPress=function(key){
+    if(key==='C') calculatorExpression='';
+    else if(key==='⌫') calculatorExpression=calculatorExpression.slice(0,-1);
+    else if(key==='='){
+      try{calculatorExpression=String(Math.round(safeEvaluateExpression(calculatorExpression)*100)/100);}catch(e){calculatorExpression='';}
+    }else calculatorExpression+=key;
+    const display=document.getElementById('expenseCalculatorDisplay');
+    if(display) display.textContent=calculatorExpression||'0';
+  };
+  window.useExpenseCalculatorResult=function(){
+    try{
+      const value=Math.round(safeEvaluateExpression(calculatorExpression)*100)/100;
+      const target=document.getElementById(calculatorTargetId);
+      if(target){target.value=value.toFixed(2);target.dispatchEvent(new Event('input',{bubbles:true}));}
+      window.closeExpenseCalculator();
+    }catch(e){alert('Please complete the calculation first.');}
+  };
+
   function showExpenseSavedNote(){
     const sheet=document.querySelector('#expenseModal .tools-sheet');
     if(!sheet) return;
@@ -608,15 +1194,19 @@ function getBookingStatusLabel(status){
     editingExpenseIndex=null;
     const user=currentUser();
     const item=document.getElementById('expenseItem'); if(item) item.value='';
+    window.setExpenseCategory('Meals');
     const total=document.getElementById('expenseTotal'); if(total) total.value='';
     setSelectValue('expensePaidBy',user);
+    setSelectValue('expensePersonalPaidBy',user);
     const personal=document.getElementById('expensePersonal'); if(personal) personal.checked=false;
     const consumed=document.getElementById('expenseConsumedBy');
     if(consumed){consumed.dataset.manual='false';setSelectValue('expenseConsumedBy',user);}
     try{splitAll();}
     catch(e){document.querySelectorAll('#expenseModal input[data-split]').forEach(x=>x.checked=true);}
+    expenseSplitMode='equal';
     try{updateExpenseMode();}catch(e){}
-    const title=document.getElementById('expenseModalTitle'); if(title) title.textContent='💰 What did we spend?';
+    window.updateSplitUI();
+    const title=document.getElementById('expenseModalTitle'); if(title) title.textContent='Add expense';
     const save=document.getElementById('expenseSaveButton'); if(save) save.textContent='Save';
     ensurePaidByUI();
     updatePaidByDisplay();
@@ -625,8 +1215,9 @@ function getBookingStatusLabel(status){
     const personal=e.type==='personal';
     const split=e.split||[];
     const consumer=e.consumedBy || split[0] || e.paidBy;
-    const who=personal ? `Consumed by ${labelFor(consumer)}` : `Split: ${split.map(labelFor).join(' · ')}`;
-    return `<div class="expense-card"><strong>${e.item||''}</strong><p class="timestamp">${timeLabel(e.createdAt)}${e.editedAt?` · Edited ${timeLabel(e.editedAt)}`:''}</p><p>${Number(e.total||0).toLocaleString()} VND · Paid by ${labelFor(e.paidBy)}</p><p>${personal?'Personal Expense':'Shared Expense'} · ${who}</p><div class="entry-actions"><button class="mini-btn" onclick="editExpense(${e._idx})">✏️ Edit</button><button class="mini-btn" onclick="deleteExpense(${e._idx})">🗑 Delete</button></div></div>`;
+    const who=personal ? `Consumed by ${labelFor(consumer)}` : `${e.splitMode==='custom'?'Custom':'Equal'} split: ${split.map(labelFor).join(' · ')}`;
+    const latestId=e._latest?' id="latestExpenseCard"':'';
+    return `<div class="expense-card"${latestId}><strong>${escapeHTML(e.item||'')}</strong><p class="timestamp">${timeLabel(e.createdAt)}${e.editedAt?` · Edited ${timeLabel(e.editedAt)}`:''}</p><p>${Number(e.total||0).toLocaleString()} JPY · Paid by ${labelFor(e.paidBy)}</p><p>${personal?'Personal Expense':'Shared Expense'} · ${who}</p><div class="entry-actions"><button class="mini-btn" onclick="editExpense(${e._idx})">✏️ Edit</button><button class="mini-btn" onclick="deleteExpense(${e._idx})">🗑 Delete</button></div></div>`;
   }
   function ensureToolHistory(){
     const sheet=document.querySelector('#expenseModal .tools-sheet');
@@ -639,29 +1230,66 @@ function getBookingStatusLabel(status){
     else sheet.appendChild(holder);
   }
 
+  let expensePageScrollY=0;
+  function lockExpensePage(){
+    if(document.body.classList.contains('expense-modal-open')) return;
+    expensePageScrollY=window.scrollY||0;
+    document.body.style.top=`-${expensePageScrollY}px`;
+    document.body.classList.add('expense-modal-open');
+  }
+  function unlockExpensePage(){
+    if(!document.body.classList.contains('expense-modal-open')) return;
+    document.body.classList.remove('expense-modal-open');
+    document.body.style.top='';
+    window.scrollTo(0,expensePageScrollY);
+  }
+  window.unlockExpensePage=unlockExpensePage;
+  let expenseSheetFocusScroll=0;
+  document.addEventListener('focusin',event=>{
+    if(!event.target.closest('#expenseModal')) return;
+    const sheet=document.querySelector('#expenseModal .tools-sheet');
+    if(sheet) expenseSheetFocusScroll=sheet.scrollTop;
+  });
+  document.addEventListener('focusout',event=>{
+    if(!event.target.closest('#expenseModal')) return;
+    const sheet=document.querySelector('#expenseModal .tools-sheet');
+    if(sheet) setTimeout(()=>{ if(!document.activeElement?.closest('#expenseModal input, #expenseModal textarea, #expenseModal select')) sheet.scrollTop=expenseSheetFocusScroll; },80);
+  });
+
   window.openExpenseModal=function(){
     ensurePaidByUI();
     resetExpenseForm();
+    lockExpensePage();
     const modal=document.getElementById('expenseModal');
     if(modal) modal.classList.add('show');
-    try{if(typeof renderLatestExpenseMini==='function') renderLatestExpenseMini();}catch(e){}
-    const first=document.getElementById('expenseItem'); if(first) setTimeout(()=>first.focus(),60);
   };
 
   window.saveExpense=function(){
     ensurePaidByUI();
-    const item=(document.getElementById('expenseItem')?.value||'').trim();
+    const details=(document.getElementById('expenseItem')?.value||'').trim();
+    const category=document.getElementById('expenseCategory')?.value || 'Other';
+    const item=details || category;
     const total=Number(String(document.getElementById('expenseTotal')?.value||'').replace(/[^0-9.]/g,''));
-    const paidBy=document.getElementById('expensePaidBy')?.value || currentUser();
     const personal=!!document.getElementById('expensePersonal')?.checked;
-    const split=[...document.querySelectorAll('#expenseModal input[data-split]:checked')].map(x=>x.value);
+    const paidBy=(personal?document.getElementById('expensePersonalPaidBy')?.value:document.getElementById('expensePaidBy')?.value) || currentUser();
+    const split=selectedSplitParties();
+    const splitMode=personal?'personal':expenseSplitMode;
+    let shares=null;
+    if(!personal && splitMode==='custom'){
+      shares={};
+      split.forEach(k=>{shares[k]=Number(document.getElementById(`customShare_${k}`)?.value)||0;});
+    }
     const consumedBy=document.getElementById('expenseConsumedBy')?.value || paidBy;
-    if(!item || !total) return alert('Please complete item and total.');
-    if(!personal && !split.length) return alert('Please choose who to split between.');
+    if(!total) return alert('Please enter the amount.');
+    if(!personal && !split.length) return alert('Please choose who to split with.');
+    if(!personal && splitMode==='custom'){
+      const allocated=Object.values(shares||{}).reduce((a,b)=>a+Number(b||0),0);
+      if(Math.abs(allocated-total)>0.01) return alert('Custom split must equal the total.');
+    }
 
     const arr=readExpenses();
     const now=new Date().toISOString();
-    const data={item,total,paidBy,type:personal?'personal':'shared',split:personal?[consumedBy]:split,consumedBy:personal?consumedBy:null,createdAt:now};
+    const data={item,details,category,total,paidBy,type:personal?'personal':'shared',split:personal?[consumedBy]:split,splitMode,shares:personal?null:shares,consumedBy:personal?consumedBy:null,createdAt:now};
     if(editingExpenseIndex!==null && arr[editingExpenseIndex]){
       data.createdAt=arr[editingExpenseIndex].createdAt || now;
       data.editedAt=now;
@@ -673,26 +1301,32 @@ function getBookingStatusLabel(status){
     writeExpenses(arr);
     window.renderExpenses();
     resetExpenseForm();
-    showExpenseSavedNote();
-    const first=document.getElementById('expenseItem'); if(first) setTimeout(()=>first.focus(),60);
-    // Intentional: keep modal open for quick multiple expense entry.
+    closeExpenseModal();
+    setTimeout(()=>{
+      const latest=document.getElementById('latestExpenseCard');
+      if(latest){
+        latest.scrollIntoView({behavior:'auto',block:'center'});
+        latest.classList.add('expense-card--new');
+        setTimeout(()=>latest.classList.remove('expense-card--new'),1800);
+      }
+    },120);
   };
 
   window.renderToolTransactionHistory=function(){
     const box=document.getElementById('toolTransactionHistory');
     if(!box) return;
-    const latest=readExpenses().map((e,i)=>({...e,_idx:i})).sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||''))).slice(0,5);
-    box.innerHTML=`<h3>Transaction History</h3>${latest.length?latest.map(expenseCard).join(''):'<p class="timestamp">No transactions yet.</p>'}`;
+    const latest=readExpenses().map((e,i)=>({...e,_idx:i})).sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||''))).slice(0,1);
+    box.innerHTML=`<h3>Latest Transaction</h3>${latest.length?latest.map(expenseCard).join(''):'<p class="timestamp">No transactions yet.</p>'}`;
   };
 
   window.renderExpenses=function(){
     const pageBox=document.getElementById('expensePageList');
     const arr=readExpenses();
-    const sorted=arr.map((e,i)=>({...e,_idx:i})).sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
+    const sorted=arr.map((e,i)=>({...e,_idx:i})).sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||''))).map((e,i)=>({...e,_latest:i===0}));
     if(pageBox){
       const total=arr.reduce((sum,e)=>sum+Number(e.total||0),0);
-      const personalSpend={christal:0,crystal:0,mero:0,vivian:0};
-      const balance={christal:0,crystal:0,mero:0,vivian:0};
+      const personalSpend={crystal:0,ava:0,mum:0};
+      const balance={crystal:0,ava:0,mum:0};
       arr.forEach(e=>{
         const amount=Number(e.total||0);
         if(!balance[e.paidBy]) balance[e.paidBy]=0;
@@ -704,26 +1338,24 @@ function getBookingStatusLabel(status){
           personalSpend[consumer]+=amount;
           balance[consumer]-=amount;
         }else{
-          const split=(e.split&&e.split.length)?e.split:[e.paidBy];
-          const share=amount/split.length;
-          split.forEach(k=>{if(!personalSpend[k]) personalSpend[k]=0;if(!balance[k]) balance[k]=0;personalSpend[k]+=share;balance[k]-=share;});
+          const shares=splitSharesForExpense(e);
+          Object.entries(shares).forEach(([k,share])=>{if(!personalSpend[k]) personalSpend[k]=0;if(!balance[k]) balance[k]=0;personalSpend[k]+=Number(share||0);balance[k]-=Number(share||0);});
         }
       });
-      const spendHtml=FRIEND_ORDER.map(k=>`<p>${labelFor(k)}<br><strong>${Math.round(personalSpend[k]||0).toLocaleString()} VND</strong></p>`).join('');
-      const balanceHtml=FRIEND_ORDER.map(k=>{const v=balance[k]||0;return `<p>${labelFor(k)}<br><strong>${v>=0?'Receive':'Owes'} ${Math.abs(Math.round(v)).toLocaleString()} VND</strong></p>`;}).join('');
-      pageBox.innerHTML=`<div class="expense-dashboard-v33"><div class="expense-total-card"><span>Trip Total</span><strong>${total.toLocaleString()} VND</strong><small>Shared + personal expenses</small></div><div class="expense-focus-grid"><div class="expense-focus-card"><h3>Personal Spend</h3>${spendHtml}</div><div class="expense-focus-card"><h3>Settlement</h3>${balanceHtml}</div></div></div><div class="expense-history-block"><h3>Transaction History</h3><p class="timestamp">最新交易會顯示喺最上面。</p><div class="transaction-scroll">${sorted.length?sorted.map(expenseCard).join(''):'<p>No transactions yet.</p>'}</div></div>`;
+      const spendHtml=FRIEND_ORDER.map(k=>`<p>${labelFor(k)}<br><strong>${Math.round(personalSpend[k]||0).toLocaleString()} JPY</strong></p>`).join('');
+      const balanceHtml=FRIEND_ORDER.map(k=>{const v=balance[k]||0;return `<p>${labelFor(k)}<br><strong>${v>=0?'Receive':'Owes'} ${Math.abs(Math.round(v)).toLocaleString()} JPY</strong></p>`;}).join('');
+      pageBox.innerHTML=`<div class="expense-dashboard-v33"><div class="expense-total-card"><span>Trip Total</span><strong>${total.toLocaleString()} JPY</strong><small>Shared + personal expenses</small></div><div class="expense-focus-grid"><div class="expense-focus-card"><h3>Personal Spend</h3>${spendHtml}</div><div class="expense-focus-card"><h3>Settlement</h3>${balanceHtml}</div></div></div><div class="expense-history-block"><h3>Transaction History</h3><p class="timestamp">Newest transactions appear first.</p><div class="transaction-scroll">${sorted.length?sorted.map(expenseCard).join(''):'<p>No transactions yet.</p>'}</div></div>`;
     }
-    ensureToolHistory();
-    window.renderToolTransactionHistory();
   };
 
   window.exportExpenseData=function(){
+    if(currentUser()!=='crystal') return alert('Only Crystal can export the complete expense data.');
     const arr=readExpenses();
     if(!arr.length) return alert('No expense data to export yet.');
     const quote=value=>`"${String(value??'').replace(/"/g,'""')}"`;
     const total=arr.reduce((sum,e)=>sum+Number(e.total||0),0);
-    const personalSpend={christal:0,crystal:0,mero:0,vivian:0};
-    const balance={christal:0,crystal:0,mero:0,vivian:0};
+    const personalSpend={crystal:0,ava:0,mum:0};
+    const balance={crystal:0,ava:0,mum:0};
     arr.forEach(e=>{
       const amount=Number(e.total||0);
       if(!(e.paidBy in balance)) balance[e.paidBy]=0;
@@ -735,38 +1367,41 @@ function getBookingStatusLabel(status){
         personalSpend[consumer]+=amount;
         balance[consumer]-=amount;
       }else{
-        const split=(e.split&&e.split.length)?e.split:[e.paidBy];
-        const share=amount/split.length;
-        split.forEach(k=>{
+        const shares=splitSharesForExpense(e);
+        Object.entries(shares).forEach(([k,share])=>{
           if(!(k in personalSpend)) personalSpend[k]=0;
           if(!(k in balance)) balance[k]=0;
-          personalSpend[k]+=share;
-          balance[k]-=share;
+          personalSpend[k]+=Number(share||0);
+          balance[k]-=Number(share||0);
         });
       }
     });
     const rows=[
-      ['CCMV SAIGON EXPENSE SUMMARY'],
-      ['Trip Total VND',Math.round(total)],
+      [`${(typeof TRIP_BRAND!=='undefined'&&TRIP_BRAND.appName)||'TRIP'} · EXPENSE SUMMARY`],
+      ['Trip Total JPY',Math.round(total)],
       [],
-      ['Personal Spend','Amount VND'],
+      ['Personal Spend','Amount JPY'],
       ...FRIEND_ORDER.map(k=>[labelFor(k),Math.round(personalSpend[k]||0)]),
       [],
-      ['Settlement','Position','Amount VND'],
+      ['Settlement','Position','Amount JPY'],
       ...FRIEND_ORDER.map(k=>{
         const v=balance[k]||0;
         return [labelFor(k),v>=0?'Receive':'Owes',Math.abs(Math.round(v))];
       }),
       [],
       ['TRANSACTION HISTORY'],
-      ['Created At','Item','Total VND','Paid By','Type','Split Between','Consumed By','Edited At'],
+      ['Created At','Category','Details','Item','Total JPY','Paid By','Type','Split Mode','Split Between','Custom Shares','Consumed By','Edited At'],
       ...arr.map(e=>[
         e.createdAt||'',
+        e.category||'',
+        e.details||'',
         e.item||'',
         Number(e.total||0),
         labelFor(e.paidBy),
         e.type==='personal'?'Personal':'Shared',
+        e.splitMode||'equal',
         (e.split||[]).map(labelFor).join(' | '),
+        Object.entries(e.shares||{}).map(([k,v])=>`${labelFor(k)}: ${Number(v).toFixed(2)}`).join(' | '),
         e.consumedBy?labelFor(e.consumedBy):'',
         e.editedAt||''
       ])
@@ -777,7 +1412,7 @@ function getBookingStatusLabel(status){
     const a=document.createElement('a');
     const date=new Date().toISOString().slice(0,10);
     a.href=url;
-    a.download=`CCMV-Saigon-Expenses-${date}.csv`;
+    a.download=`CCMV-New-Zealand-Expenses-${date}.csv`;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -789,9 +1424,11 @@ function getBookingStatusLabel(status){
     const e=arr[i]; if(!e) return;
     editingExpenseIndex=i;
     ensurePaidByUI();
-    const item=document.getElementById('expenseItem'); if(item) item.value=e.item||'';
+    const item=document.getElementById('expenseItem'); if(item) item.value=e.details || (e.category ? '' : (e.item||''));
+    window.setExpenseCategory(e.category || 'Other');
     const total=document.getElementById('expenseTotal'); if(total) total.value=e.total||'';
     setSelectValue('expensePaidBy',e.paidBy||'crystal');
+    setSelectValue('expensePersonalPaidBy',e.paidBy||'crystal');
     const personal=(e.type==='personal');
     const personalBox=document.getElementById('expensePersonal'); if(personalBox) personalBox.checked=personal;
     const consumed=document.getElementById('expenseConsumedBy');
@@ -800,7 +1437,13 @@ function getBookingStatusLabel(status){
       consumed.dataset.manual=personal && consumed.value!==e.paidBy ? 'true':'false';
     }
     document.querySelectorAll('#expenseModal input[data-split]').forEach(x=>x.checked=(e.split||[]).includes(x.value));
+    expenseSplitMode=e.splitMode==='custom'?'custom':'equal';
     try{updateExpenseMode();}catch(e){}
+    window.updateSplitUI();
+    if(expenseSplitMode==='custom' && e.shares){
+      Object.entries(e.shares).forEach(([k,v])=>{const input=document.getElementById(`customShare_${k}`);if(input&&!input.readOnly) input.value=Number(v).toFixed(2);});
+      window.updateSplitUI();
+    }
     const title=document.getElementById('expenseModalTitle'); if(title) title.textContent='✏️ Edit Expense';
     const save=document.getElementById('expenseSaveButton'); if(save) save.textContent='Update Expense';
     const modal=document.getElementById('expenseModal'); if(modal) modal.classList.add('show');
@@ -820,6 +1463,89 @@ function getBookingStatusLabel(status){
   document.addEventListener('DOMContentLoaded',()=>{
     ensurePaidByUI();
     updatePaidByDisplay();
+    setExportVisibility();
+    window.updateSplitUI();
     window.renderExpenses();
   });
+})();
+
+
+/* Engine V2 — dual currency dashboard (JPY → AUD + HKD) */
+(function(){
+  const cfg=(typeof TRIP_SETTINGS!=='undefined'&&TRIP_SETTINGS.currency)||{base:'JPY',display:['AUD','HKD'],api:'https://api.frankfurter.dev/v1/latest?base=JPY&symbols=AUD,HKD'};
+  const STORAGE_KEY=((typeof TRIP_BRAND!=='undefined'&&TRIP_BRAND.storageNamespace)||'travel-engine')+'_fx_v2';
+  const state={rates:{AUD:null,HKD:null},date:'',source:'',loaded:false};
+  function parseAmount(value){const n=Number(String(value||'').replace(/[^0-9.]/g,''));return Number.isFinite(n)?n:0;}
+  function fmt(value,code){if(!Number.isFinite(value))return '--';return new Intl.NumberFormat(code==='HKD'?'en-HK':'en-AU',{minimumFractionDigits:2,maximumFractionDigits:2}).format(value);}
+  function readCache(){try{const c=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(c&&c.rates){state.rates=c.rates;state.date=c.date||'';state.source='cached';return true;}}catch(e){}return false;}
+  function saveCache(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({rates:state.rates,date:state.date,savedAt:new Date().toISOString()}));}catch(e){}}
+  function update(){
+    const amount=parseAmount(document.getElementById('currencyAmount')?.value);
+    const aud=Number(state.rates.AUD),hkd=Number(state.rates.HKD);
+    const card=document.getElementById('currencyCardValue'),meta=document.getElementById('currencyCardMeta'),result=document.getElementById('currencyResult'),status=document.getElementById('currencyStatus');
+    if(card) card.textContent=`¥10,000 ≈ A$ ${aud?fmt(10000*aud,'AUD'):'--'} · HK$ ${hkd?fmt(10000*hkd,'HKD'):'--'}`;
+    if(meta) meta.textContent=(aud&&hkd)?`${state.source==='live'?'Rate date':'Last saved'} · ${state.date||'offline'}`:'Rate unavailable';
+    if(result) result.textContent=`A$ ${aud?fmt(amount*aud,'AUD'):'--'} · HK$ ${hkd?fmt(amount*hkd,'HKD'):'--'}`;
+    if(status) status.textContent=(aud&&hkd)?`${state.source==='live'?'Latest daily reference rates':'Offline cached rates'} · ${state.date||''}`:'Connect to the internet to load exchange rates.';
+  }
+  async function load(){readCache();update();try{const r=await fetch(cfg.api,{cache:'no-store'});if(!r.ok)throw Error('fx');const d=await r.json();if(!d?.rates?.AUD||!d?.rates?.HKD)throw Error('invalid');state.rates={AUD:Number(d.rates.AUD),HKD:Number(d.rates.HKD)};state.date=d.date||new Date().toISOString().slice(0,10);state.source='live';saveCache();}catch(e){}state.loaded=true;update();}
+  window.openCurrencyModal=function(){const m=document.getElementById('currencyModal');if(!m)return;m.classList.add('open');m.setAttribute('aria-hidden','false');document.body.classList.add('currency-modal-open');update();setTimeout(()=>document.getElementById('currencyAmount')?.focus({preventScroll:true}),80);};
+  window.closeCurrencyModal=function(){const m=document.getElementById('currencyModal');if(!m)return;m.classList.remove('open');m.setAttribute('aria-hidden','true');document.body.classList.remove('currency-modal-open');};
+  window.swapCurrencyDirection=function(){/* retained for backward compatibility */};
+  document.addEventListener('DOMContentLoaded',()=>{document.getElementById('currencyAmount')?.addEventListener('input',update);const m=document.getElementById('currencyModal');if(m)m.addEventListener('click',e=>{if(e.target===m)window.closeCurrencyModal();});load();});
+})();
+
+/* Engine V2 — data-driven navigation labels */
+(function(){
+  function stripDayHeading(text){ return String(text||'').replace(/^Day\s+\d+\s*·?\s*/i,''); }
+  function renderEngineMenus(){
+    document.querySelectorAll('#daysMenu').forEach(menu=>{
+      menu.innerHTML=Object.entries(ITINERARY_DATA||{}).map(([n,d])=>{
+        const sub=stripDayHeading(d.kicker||'').replace(' • ','<br>');
+        return `<a href="day.html?day=${n}"><span><span class="menu-title">Day ${n}</span><span class="menu-sub">${d.heading}<br>${sub}</span></span><span>›</span></a>`;
+      }).join('');
+    });
+    document.querySelectorAll('#tripMenu').forEach(menu=>{
+      menu.innerHTML=(TRIP_ORDER||[]).map(key=>{
+        const card=TRIP_DATA[key];
+        return `<a href="#" onclick="openTripCard('${key}');return false;"><span><span class="menu-title">${card.title}</span></span><span>›</span></a>`;
+      }).join('');
+    });
+    document.querySelectorAll('#guideMenu').forEach(menu=>{
+      const labels={STAY:'🏨 STAY',DINING:'🍽 DINING',ACTIVITIES:'🎟 ACTIVITIES',ATTRACTIONS:'⛩️ ATTRACTIONS',SHOPPING:'🛍️ SHOPPING',ESSENTIALS:'✈️ ESSENTIALS'};
+      menu.innerHTML=Object.keys(CATEGORIES||{}).filter(k=>(CATEGORIES[k]||[]).length).map(k=>`<button onclick="openGuideCategory('${k}')"><span><span class="menu-title">${labels[k]||k}</span></span><span>›</span></button>`).join('');
+    });
+  }
+  document.addEventListener('DOMContentLoaded',renderEngineMenus);
+})();
+
+/* Tokyo V1 — replace frozen overview content from trip data */
+(function(){
+  document.addEventListener('DOMContentLoaded',()=>{
+    const summary=document.querySelector('.day-summary');
+    if(summary){
+      summary.innerHTML=Object.entries(ITINERARY_DATA||{}).map(([n,d])=>`<a href="day.html?day=${n}"><strong>Day ${n}</strong><span><span class="day-card-title">${d.heading}</span><span class="day-card-meta">${String(d.kicker||'').replace(/^Day\s+\d+\s*·\s*/,'')}<br>${(d.legend||[]).join(' · ')}</span></span></a>`).join('');
+    }
+    document.querySelectorAll('main.section .prose-block[id]').forEach(section=>{
+      const card=TRIP_DATA&&TRIP_DATA[section.id];
+      if(card) section.innerHTML=`<h2>${card.title}</h2>${card.body}`;
+    });
+  });
+})();
+
+
+/* Engine V2 — full Guide and Trip pages use the same source of truth */
+(function(){
+  const labels={STAY:'🏨 STAY',DINING:'🍽 DINING',ACTIVITIES:'🎟 ACTIVITIES',ATTRACTIONS:'⛩️ ATTRACTIONS',SHOPPING:'🛍️ SHOPPING',ESSENTIALS:'✈️ ESSENTIALS'};
+  function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+  function renderGuidePage(){
+    const root=document.getElementById('guidePageContent');if(!root)return;
+    root.innerHTML=Object.keys(CATEGORIES||{}).filter(k=>(CATEGORIES[k]||[]).length).map(k=>`<section class="prose-block"><h2>${labels[k]||esc(k)}</h2><div class="category-pop-list">${CATEGORIES[k].map(entry=>typeof entry==='string'?{key:entry}:entry).filter(entry=>entry&&PLACES[entry.key]).map(entry=>{const id=entry.key,p=PLACES[id];return `<button type="button" onclick="location.href='place.html?id=${encodeURIComponent(id)}'"><span><span class="guide-list-title">${esc(p.emoji||entry.emoji||'📍')} ${esc(p.title||entry.title)}</span><span class="guide-list-sub">${esc(p.sub||entry.sub||p.categoryLabel||'')}</span></span><span>›</span></button>`;}).join('')}</div></section>`).join('');
+  }
+  function renderTripPage(){
+    const root=document.getElementById('tripPageContent');if(!root)return;
+    root.innerHTML=(TRIP_ORDER||[]).filter(k=>TRIP_DATA[k]).map(k=>`<section class="prose-block" id="${esc(k)}"><h2>${TRIP_DATA[k].title}</h2>${TRIP_DATA[k].body}</section>`).join('');
+    if(typeof loadChecklist==='function')setTimeout(loadChecklist,0);
+  }
+  document.addEventListener('DOMContentLoaded',()=>{renderGuidePage();renderTripPage();});
 })();
